@@ -1,0 +1,60 @@
+{
+    "config": {
+        "num_samples": 871,
+        "num_nodes": 200,
+        "smri_dim": 2072,
+        "num_sites": 20,
+        "hidden_dim": 256,
+        "dropout": 0.3,
+        "batch_size": 32,
+        "learning_rate": 0.0005,
+        "weight_decay": 0.01,
+        "epochs": 200,
+        "patience": 30,
+        "lambda_cls": 1.0,
+        "k_fold": 5,
+        "random_seed": 42,
+        "lambda_site": 0.05,
+        "lambda_age": 0.01,
+        "lambda_reg": 0.0001,
+        "save_dir": "./results",
+        "data_dir": "./data"
+    },
+    "fold_results": [
+        {
+            "fold": 1,
+            "test_accuracy": 0.6775956284153005,
+            "test_auc": 0.6633900743227044,
+            "test_f1": 0.659234552130727
+        },
+        {
+            "fold": 2,
+            "test_accuracy": 0.6440677966101694,
+            "test_auc": 0.6859335038363172,
+            "test_f1": 0.6438632705236247
+        },
+        {
+            "fold": 3,
+            "test_accuracy": 0.6666666666666666,
+            "test_auc": 0.6965352449223418,
+            "test_f1": 0.6670634920634921
+        },
+        {
+            "fold": 4,
+            "test_accuracy": 0.6294117647058823,
+            "test_auc": 0.6723124300111982,
+            "test_f1": 0.629165043500844
+        },
+        {
+            "fold": 5,
+            "test_accuracy": 0.5748502994011976,
+            "test_auc": 0.607391304347826,
+            "test_f1": 0.5739223288662226
+        }
+    ],
+    "average_metrics": {
+        "accuracy": 0.6385184311598433,
+        "auc": 0.6651125114880776,
+        "f1": 0.6346497374169822
+    }
+}
