@@ -5,18 +5,18 @@ import os
 
 class Config:
     # Paths
-    BASE_DIR = "/root/Multmodal_ABIDE/data"
+    BASE_DIR = "/root/Multmodal_ABIDE/"
     FMRI_ATLAS = 'CC200'  # AAL or CC200
     DATASET_PATH = "/root/Multmodal_ABIDE/data/fMRI/CC200/"
-    LABEL_DIR = os.path.join(BASE_DIR, "phynotypic/")
-    SMRI_DIR = os.path.join(BASE_DIR, "sMRI/freesurfer_stats/")
+    LABEL_DIR = os.path.join(BASE_DIR, "data/phynotypic/")
+    SMRI_DIR = os.path.join(BASE_DIR, "data/sMRI/freesurfer_stats/")
     
     # ComBat settings
     COMBAT_FMRI = True
     COMBAT_SMRI = True
     
     # Model save paths
-    SAVE_PATH = os.path.join(BASE_DIR, f'save_models/{FMRI_ATLAS}_sMRI/')
+    SAVE_PATH = os.path.join(BASE_DIR, f'results/save_models/{FMRI_ATLAS}_sMRI/')
     if COMBAT_SMRI:
         SAVE_PATH = os.path.join(SAVE_PATH, 'with_ComBat/')
     else:

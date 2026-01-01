@@ -138,68 +138,68 @@ def load_desikan_killiany(config, subject_IDs):
 def load_aseg(config, subject_IDs):
     """Load ASEG features"""
     print("  Loading ASEG features...")
-    
+
     feature_list = ['Number of Voxels', 'Volume', 'Intensity normMean',
-                   'Itensity normStdDev', 'Intensity normMin', 
+                   'Itensity normStdDev', 'Intensity normMin',
                    'Intensity normMax', 'Intensity normRange']
-    names = ['ColHeader Index', 'Segmentation Id '] + feature_list + ['Structure Name']
+    names = ['ColHeader Index', 'Segmentation Id '] + ['Number of Voxels', 'Volume', 'Structure Name'] + feature_list[2:]
     skiprows = list(range(0, 79))
     num_roi = config.SMRI_ROI_ASEG
     num_valid = config.NUM_SAMPLES - len(config.USELESS_SAMPLES)
-    
+
     features = np.zeros((num_valid, num_roi * len(feature_list)))
     position = 0
-    
+
     for i in range(config.NUM_SAMPLES):
         subject_name = subject_IDs[i]
         if subject_name in config.USELESS_SAMPLES:
             continue
-        
+
         table = pd.read_table(
             os.path.join(config.SMRI_DIR, subject_name, 'aseg.stats'),
             sep='\\s+', names=names, skiprows=skiprows
         )
-        
+
         for j, feature_name in enumerate(feature_list):
             feat = table[feature_name].values.tolist()
             features[position, j*num_roi:(j+1)*num_roi] = feat
-        
+
         position += 1
-    
+
     return features
 
 
 def load_wmparc(config, subject_IDs):
     """Load WMPARC features"""
     print("  Loading WMPARC features...")
-    
+
     feature_list = ['Number of Voxels', 'Volume', 'Intensity normMean',
-                   'Itensity normStdDev', 'Intensity normMin', 
+                   'Itensity normStdDev', 'Intensity normMin',
                    'Intensity normMax', 'Intensity normRange']
-    names = ['ColHeader Index', 'Segmentation Id '] + feature_list + ['Structure Name']
+    names = ['ColHeader Index', 'Segmentation Id '] + ['Number of Voxels', 'Volume', 'Structure Name'] + feature_list[2:]
     skiprows = list(range(0, 65))
     num_roi = config.SMRI_ROI_WMPARC
     num_valid = config.NUM_SAMPLES - len(config.USELESS_SAMPLES)
-    
+
     features = np.zeros((num_valid, num_roi * len(feature_list)))
     position = 0
-    
+
     for i in range(config.NUM_SAMPLES):
         subject_name = subject_IDs[i]
         if subject_name in config.USELESS_SAMPLES:
             continue
-        
+
         table = pd.read_table(
             os.path.join(config.SMRI_DIR, subject_name, 'wmparc.stats'),
             sep='\\s+', names=names, skiprows=skiprows
         )
-        
+
         for j, feature_name in enumerate(feature_list):
             feat = table[feature_name].values.tolist()
             features[position, j*num_roi:(j+1)*num_roi] = feat
-        
+
         position += 1
-    
+
     return features
 
 
