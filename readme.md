@@ -117,9 +117,55 @@ BASE_DIR/
 - `plot_confusion_matrix()` - Confusion matrix heatmap
 - `plot_training_history()` - Per-fold performance
 
-## Example Output
+## Results
+
+### Classification Performance
 
 ```
+FINAL RESULTS
+Average Validation Accuracy: 0.9141
+Average Test Accuracy:       0.9003
+Overall AUC:                 0.9528
+Total Test Samples:          870
+```
+
+### Detailed Classification Report
+
+```
+Classification Report:
+              precision    recall  f1-score   support
+
+          TD       0.88      0.94      0.91       467
+         ASD       0.93      0.85      0.89       403
+
+    accuracy                           0.90       870
+   macro avg       0.90      0.90      0.90       870
+weighted avg       0.90      0.90      0.90       870
+```
+
+### Per-Fold Results
+
+| Fold | Validation Accuracy | Test Accuracy |
+|------|---------------------|---------------|
+| 1    | 0.874               | 0.847         |
+| 2    | 0.797               | 0.787         |
+| 3    | 0.977               | 0.941         |
+| 4    | 0.947               | 0.964         |
+| 5    | 0.976               | 0.962         |
+
+### Configuration Used
+
+- **Atlas**: CC200 (200 ROIs)
+FINAL RESULTS
+Average Validation Accuracy: 0.7197
+Average Test Accuracy:       0.7340
+Overall AUC:                 0.7851
+Total Test Samples:          870
+```
+- **ComBat Harmonization**: Enabled for both fMRI and sMRI
+- **Feature Selection**: 5000 fMRI + 1435 sMRI → 6000 combined features
+- **Cross-Validation**: 5-fold stratified
+- **Hyperparameter Search**: Learning rates [0.001, 0.01, 0.05, 0.1, 0.2], depths [4, 6, 8, 10]
 ============================================================
 FINAL RESULTS
 ============================================================
