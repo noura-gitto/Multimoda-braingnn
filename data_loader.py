@@ -23,7 +23,11 @@ def get_index(lst, item):
 
 
 def load_fmri_data(config):
-    """Load and process fMRI data"""
+    """
+    Load and process fMRI data from connectivity matrices.
+    
+    Handles missing files gracefully with warnings.
+    """
     print("Loading fMRI data...")
     
     # Load labels and metadata
@@ -50,28 +54,60 @@ def load_fmri_data(config):
     
     # Process each subject
     position = 0
+    failed_subjects = []
+    
     for i in range(config.NUM_SAMPLES):
         subject_name = subject_IDs[i]
         if subject_name in config.USELESS_SAMPLES:
-            print(f'Skipping sample {subject_name}')
+            print(f'  Skipping sample {subject_name} (marked as useless)')
             continue
         
-        # Load connectivity matrix
-        image_name = f'{subject_name}.mat'
-        image = scio.loadmat(os.path.join(config.DATASET_PATH, image_name))
-        img = image['connectivity']
-        
-        # Extract upper triangle
-        idx = np.triu_indices_from(img, 1)
-        fMRI_images[position, :] = img[idx]
-        
-        # Store metadata
-        subject_index = get_index(subject_IDs, subject_name)[0]
-        sites.append(all_sites[subject_index])
-        labels[position] = label[subject_index]
-        genders_clean[position] = int(gender[subject_index]) + 1
-        ages_clean[position] = float(age[subject_index].replace(' ', ''))
-        position += 1
+        try:
+            # Load connectivity matrix
+            image_name = f'{subject_name}.mat'
+            image_path = os.path.join(config.DATASET_PATH, image_name)
+            
+            if not os.path.exists(image_path):
+                print(f'  ⚠️  Warning: File not found {image_name}')
+                failed_subjects.append(subject_name)
+                continue
+            
+            image = scio.loadmat(image_path)
+            
+            if 'connectivity' not in image:
+                print(f'  ⚠️  Warning: No connectivity field in {image_name}')
+                failed_subjects.append(subject_name)
+                continue
+            
+            img = image['connectivity']
+            
+            # Extract upper triangle
+            idx = np.triu_indices_from(img, 1)
+            fMRI_images[position, :] = img[idx]
+            
+            # Store metadata
+            subject_index = get_index(subject_IDs, subject_name)[0]
+            sites.append(all_sites[subject_index])
+            labels[position] = label[subject_index]
+            genders_clean[position] = int(gender[subject_index]) + 1
+            ages_clean[position] = float(age[subject_index].replace(' ', ''))
+            position += 1
+            
+        except Exception as e:
+            print(f'  ⚠️  Warning: Failed to load {subject_name}: {str(e)}')
+            failed_subjects.append(subject_name)
+            continue
+    
+    if failed_subjects:
+        print(f"\n⚠️  {len(failed_subjects)} subjects failed to load: {failed_subjects}")
+    
+    # Trim arrays to actual loaded size
+    fMRI_images = fMRI_images[:position, :]
+    labels = labels[:position]
+    genders_clean = genders_clean[:position, :]
+    ages_clean = ages_clean[:position, :]
+    
+    print(f"✓ Loaded {position} fMRI samples successfully")
     
     return fMRI_images, labels, sites, genders_clean, ages_clean, unique_sites
 
@@ -204,7 +240,11 @@ def load_wmparc(config, subject_IDs):
 
 
 def load_phenotypic_data(config, subject_IDs):
-    """Load phenotypic data (FIQ, NUM, PEC, RAT)"""
+    """
+    Load phenotypic data (FIQ, NUM, PEC, RAT).
+    
+    Handles missing values by replacing with population mean/default.
+    """
     print("Loading phenotypic data...")
     
     num_valid = config.NUM_SAMPLES - len(config.USELESS_SAMPLES)
@@ -213,11 +253,15 @@ def load_phenotypic_data(config, subject_IDs):
     PEC = np.zeros((num_valid, 1))
     RAT = np.zeros((num_valid, 1))
     
-    # Load data
-    FIQS = scio.loadmat(os.path.join(config.LABEL_DIR, 'FIQS.mat'))['FIQS']
-    NUMS = scio.loadmat(os.path.join(config.LABEL_DIR, 'NUM.mat'))['NUM']
-    PECS = scio.loadmat(os.path.join(config.LABEL_DIR, 'PEC.mat'))['PEC']
-    RATS = scio.loadmat(os.path.join(config.LABEL_DIR, 'RAT.mat'))['RAT']
+    try:
+        # Load data
+        FIQS = scio.loadmat(os.path.join(config.LABEL_DIR, 'FIQS.mat'))['FIQS']
+        NUMS = scio.loadmat(os.path.join(config.LABEL_DIR, 'NUM.mat'))['NUM']
+        PECS = scio.loadmat(os.path.join(config.LABEL_DIR, 'PEC.mat'))['PEC']
+        RATS = scio.loadmat(os.path.join(config.LABEL_DIR, 'RAT.mat'))['RAT']
+    except Exception as e:
+        print(f"Error loading phenotypic files: {e}")
+        raise
     
     position = 0
     for i in range(config.NUM_SAMPLES):
@@ -225,15 +269,25 @@ def load_phenotypic_data(config, subject_IDs):
         if subject_name in config.USELESS_SAMPLES:
             continue
         
-        subject_index = get_index(subject_IDs, subject_name)[0]
-        FIQ[position] = int(FIQS[subject_index])
-        NUM[position] = float(NUMS[subject_index])
-        PEC[position] = float(PECS[subject_index])
-        RAT[position] = int(RATS[subject_index])
-        position += 1
+        try:
+            subject_index = get_index(subject_IDs, subject_name)[0]
+            FIQ[position] = int(FIQS[subject_index])
+            NUM[position] = float(NUMS[subject_index])
+            PEC[position] = float(PECS[subject_index])
+            RAT[position] = int(RATS[subject_index])
+            position += 1
+        except Exception as e:
+            print(f"Warning: Failed to load phenotypic data for {subject_name}: {e}")
+            position += 1
+            continue
     
-    # Handle missing FIQ values
-    FIQ[FIQ == -9999] = 108
+    # Handle missing FIQ values (represented as -9999)
+    missing_fiq = np.sum(FIQ == -9999)
+    if missing_fiq > 0:
+        print(f"  ⚠️  Found {missing_fiq} missing FIQ values, replacing with population mean (108)")
+        FIQ[FIQ == -9999] = 108
+    
+    print(f"✓ Loaded phenotypic data for {position} subjects")
     
     return FIQ, NUM, PEC, RAT
 
