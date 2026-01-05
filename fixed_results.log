@@ -1,0 +1,389 @@
+================================================================================
+Multimodal Brain ASD Classification with CatBoost [FIXED DATA LEAKAGE]
+================================================================================
+
+✓ Reproducibility seeds set (random_state=0)
+
+Working directory: /root/Multimoda-braingnn
+fMRI Atlas: CC200
+ComBat fMRI: True
+ComBat sMRI: True
+Cross-validation: 5-Fold
+
+============================================================
+LOADING DATA
+============================================================
+Loading fMRI data...
+  Skipping sample 51334 (marked as useless)
+✓ Loaded 870 fMRI samples successfully
+Loading sMRI data...
+  Loading Desikan-Killiany features...
+  Loading ASEG features...
+  Loading WMPARC features...
+Loading phenotypic data...
+  ⚠️  Found 60 missing FIQ values, replacing with population mean (108)
+✓ Loaded phenotypic data for 870 subjects
+
+Data shapes:
+  fMRI: (870, 19900)
+  sMRI: (870, 1435)
+  Labels: (870,)
+  Unique sites: 20
+
+============================================================
+CREATING FOLD SPLITS
+============================================================
+
+Fold 1 - Sample distribution:
+  Train: 541 samples (Class 0: 266, Class 1: 275)
+  Val:   147 samples (Class 0: 105, Class 1: 42)
+  Test:  182 samples (Class 0: 96, Class 1: 86)
+  ⚠️  WARNING: val has class imbalance (positive class: 28.6%)
+
+Fold 2 - Sample distribution:
+  Train: 545 samples (Class 0: 270, Class 1: 275)
+  Val:   148 samples (Class 0: 105, Class 1: 43)
+  Test:  177 samples (Class 0: 92, Class 1: 85)
+  ⚠️  WARNING: val has class imbalance (positive class: 29.1%)
+
+Fold 3 - Sample distribution:
+  Train: 548 samples (Class 0: 266, Class 1: 282)
+  Val:   148 samples (Class 0: 108, Class 1: 40)
+  Test:  174 samples (Class 0: 93, Class 1: 81)
+  ⚠️  WARNING: val has class imbalance (positive class: 27.0%)
+
+Fold 4 - Sample distribution:
+  Train: 552 samples (Class 0: 263, Class 1: 289)
+  Val:   148 samples (Class 0: 110, Class 1: 38)
+  Test:  170 samples (Class 0: 94, Class 1: 76)
+  ⚠️  WARNING: val has class imbalance (positive class: 25.7%)
+
+Fold 5 - Sample distribution:
+  Train: 554 samples (Class 0: 268, Class 1: 286)
+  Val:   149 samples (Class 0: 107, Class 1: 42)
+  Test:  167 samples (Class 0: 92, Class 1: 75)
+  ⚠️  WARNING: val has class imbalance (positive class: 28.2%)
+
+============================================================
+TRAINING MODELS
+============================================================
+
+============================================================
+FOLD 1: HARMONIZATION, FEATURE SELECTION, TRAINING
+============================================================
+
+Step 1: Harmonization (Fold 1)
+  Applying ComBat harmonization to fMRI (using TRAINING data only)...
+[neuroCombat] Creating design matrix
+[neuroCombat] Standardizing data across features
+[neuroCombat] Fitting L/S model and finding priors
+[neuroCombat] Finding parametric adjustments
+[neuroCombat] Final adjustment of data
+  Applying ComBat harmonization to sMRI (using TRAINING data only)...
+[neuroCombat] Creating design matrix
+[neuroCombat] Standardizing data across features
+[neuroCombat] Fitting L/S model and finding priors
+[neuroCombat] Finding parametric adjustments
+[neuroCombat] Final adjustment of data
+Step 2: Feature Selection (Fold 1)
+  Combined features shape: (870, 6000)
+Step 3: Training (Fold 1)
+
+============================================================
+Training Fold 1
+============================================================
+Train samples: 541
+Val samples:   147
+Test samples:  182
+Training CatBoost with hyperparameter search...
+GPU detected, using GPU for training
+Best learning rate: 0.001
+Best depth:         4
+Validation acc:     0.2789
+Test accuracy:      0.4780
+Balanced accuracy:  0.5046
+Macro F1-Score:     0.3410
+Model saved to /root/Multimoda-braingnn/results/save_models/CC200_sMRI/with_ComBat/CAT_1.m
+
+============================================================
+FOLD 2: HARMONIZATION, FEATURE SELECTION, TRAINING
+============================================================
+
+Step 1: Harmonization (Fold 2)
+  Applying ComBat harmonization to fMRI (using TRAINING data only)...
+[neuroCombat] Creating design matrix
+[neuroCombat] Standardizing data across features
+[neuroCombat] Fitting L/S model and finding priors
+[neuroCombat] Finding parametric adjustments
+[neuroCombat] Final adjustment of data
+  Applying ComBat harmonization to sMRI (using TRAINING data only)...
+[neuroCombat] Creating design matrix
+[neuroCombat] Standardizing data across features
+[neuroCombat] Fitting L/S model and finding priors
+[neuroCombat] Finding parametric adjustments
+[neuroCombat] Final adjustment of data
+Step 2: Feature Selection (Fold 2)
+  Combined features shape: (870, 6000)
+Step 3: Training (Fold 2)
+
+============================================================
+Training Fold 2
+============================================================
+Train samples: 545
+Val samples:   148
+Test samples:  177
+Training CatBoost with hyperparameter search...
+GPU detected, using GPU for training
+Best learning rate: 0.1
+Best depth:         4
+Validation acc:     0.6149
+Test accuracy:      0.6497
+Balanced accuracy:  0.6492
+Macro F1-Score:     0.6492
+Model saved to /root/Multimoda-braingnn/results/save_models/CC200_sMRI/with_ComBat/CAT_2.m
+
+============================================================
+FOLD 3: HARMONIZATION, FEATURE SELECTION, TRAINING
+============================================================
+
+Step 1: Harmonization (Fold 3)
+  Applying ComBat harmonization to fMRI (using TRAINING data only)...
+[neuroCombat] Creating design matrix
+[neuroCombat] Standardizing data across features
+[neuroCombat] Fitting L/S model and finding priors
+[neuroCombat] Finding parametric adjustments
+[neuroCombat] Final adjustment of data
+  Applying ComBat harmonization to sMRI (using TRAINING data only)...
+[neuroCombat] Creating design matrix
+[neuroCombat] Standardizing data across features
+[neuroCombat] Fitting L/S model and finding priors
+[neuroCombat] Finding parametric adjustments
+[neuroCombat] Final adjustment of data
+Step 2: Feature Selection (Fold 3)
+  Combined features shape: (870, 6000)
+Step 3: Training (Fold 3)
+
+============================================================
+Training Fold 3
+============================================================
+Train samples: 548
+Val samples:   148
+Test samples:  174
+Training CatBoost with hyperparameter search...
+GPU detected, using GPU for training
+Best learning rate: 0.001
+Best depth:         4
+Validation acc:     0.7230
+Test accuracy:      0.5402
+Balanced accuracy:  0.5062
+Macro F1-Score:     0.3618
+Model saved to /root/Multimoda-braingnn/results/save_models/CC200_sMRI/with_ComBat/CAT_3.m
+
+============================================================
+FOLD 4: HARMONIZATION, FEATURE SELECTION, TRAINING
+============================================================
+
+Step 1: Harmonization (Fold 4)
+  Applying ComBat harmonization to fMRI (using TRAINING data only)...
+[neuroCombat] Creating design matrix
+[neuroCombat] Standardizing data across features
+[neuroCombat] Fitting L/S model and finding priors
+[neuroCombat] Finding parametric adjustments
+[neuroCombat] Final adjustment of data
+  Applying ComBat harmonization to sMRI (using TRAINING data only)...
+[neuroCombat] Creating design matrix
+[neuroCombat] Standardizing data across features
+[neuroCombat] Fitting L/S model and finding priors
+[neuroCombat] Finding parametric adjustments
+[neuroCombat] Final adjustment of data
+Step 2: Feature Selection (Fold 4)
+  Combined features shape: (870, 6000)
+Step 3: Training (Fold 4)
+
+============================================================
+Training Fold 4
+============================================================
+Train samples: 552
+Val samples:   148
+Test samples:  170
+Training CatBoost with hyperparameter search...
+GPU detected, using GPU for training
+Best learning rate: 0.001
+Best depth:         4
+Validation acc:     0.6892
+Test accuracy:      0.6000
+Balanced accuracy:  0.5892
+Macro F1-Score:     0.5888
+Model saved to /root/Multimoda-braingnn/results/save_models/CC200_sMRI/with_ComBat/CAT_4.m
+
+============================================================
+FOLD 5: HARMONIZATION, FEATURE SELECTION, TRAINING
+============================================================
+
+Step 1: Harmonization (Fold 5)
+  Applying ComBat harmonization to fMRI (using TRAINING data only)...
+[neuroCombat] Creating design matrix
+[neuroCombat] Standardizing data across features
+[neuroCombat] Fitting L/S model and finding priors
+[neuroCombat] Finding parametric adjustments
+[neuroCombat] Final adjustment of data
+  Applying ComBat harmonization to sMRI (using TRAINING data only)...
+[neuroCombat] Creating design matrix
+[neuroCombat] Standardizing data across features
+[neuroCombat] Fitting L/S model and finding priors
+[neuroCombat] Finding parametric adjustments
+[neuroCombat] Final adjustment of data
+Step 2: Feature Selection (Fold 5)
+  Combined features shape: (870, 6000)
+Step 3: Training (Fold 5)
+
+============================================================
+Training Fold 5
+============================================================
+Train samples: 554
+Val samples:   149
+Test samples:  167
+Training CatBoost with hyperparameter search...
+GPU detected, using GPU for training
+Best learning rate: 0.2
+Best depth:         8
+Validation acc:     0.7114
+Test accuracy:      0.5868
+Balanced accuracy:  0.5486
+Macro F1-Score:     0.4925
+Model saved to /root/Multimoda-braingnn/results/save_models/CC200_sMRI/with_ComBat/CAT_5.m
+
+============================================================
+RESULTS AND VISUALIZATION
+============================================================
+
+Classification Report:
+============================================================
+              precision    recall  f1-score   support
+
+          TD       0.59      0.66      0.62       467
+         ASD       0.54      0.47      0.50       403
+
+    accuracy                           0.57       870
+   macro avg       0.57      0.56      0.56       870
+weighted avg       0.57      0.57      0.57       870
+
+Mean AUC across folds: 0.6095
+
+============================================================
+NEUROSCIENCE BIOMARKER ANALYSIS
+============================================================
+
+Site Performance (Generalization across hospitals/scanners):
+    Site   N  Accuracy  Sensitivity  Specificity      AUC
+ CALTECH  15  0.666667     0.200000     0.900000 0.820000
+     CMU  11  0.454545     0.000000     1.000000 0.300000
+     KKI  33  0.636364     0.000000     1.000000 0.507937
+LEUVEN_1  28  0.500000     0.000000     1.000000 0.459184
+LEUVEN_2  28  0.571429     0.000000     1.000000 0.567708
+ MAX_MUN  45  0.577778     0.052632     0.961538 0.429150
+     NYU 172  0.418605     0.135135     0.632653 0.178709
+    OHSU  25  0.480000     1.000000     0.000000 0.333333
+    OLIN  28  0.571429     1.000000     0.142857 0.469388
+    PITT  50  0.500000     1.000000     0.038462 0.487179
+     SBL  26  0.500000     0.166667     0.785714 0.267857
+    SDSU  27  0.296296     1.000000     0.000000 0.322368
+STANFORD  25  0.200000     0.250000     0.153846 0.128205
+ TRINITY  44  0.590909     1.000000     0.280000 0.686316
+  UCLA_1  64  0.421875     0.162162     0.777778 0.495495
+  UCLA_2  21  0.428571     0.000000     0.900000 0.663636
+    UM_1  86  0.651163     0.823529     0.538462 0.563914
+    UM_2  34  0.558824     0.384615     0.666667 0.545788
+     USM  67  0.492537     0.511628     0.458333 0.507752
+    YALE  41  0.365854     0.045455     0.736842 0.540670
+
+Top Features by Modality:
+  Feature  Importance Modality
+ sMRI_573   13.804364     sMRI
+ sMRI_674   10.574007     sMRI
+ sMRI_580    4.305712     sMRI
+ sMRI_540    2.644163     sMRI
+ sMRI_504    2.619603     sMRI
+ sMRI_641    2.209158     sMRI
+ sMRI_670    1.846616     sMRI
+ sMRI_661    1.841982     sMRI
+ sMRI_582    1.290092     sMRI
+sMRI_1043    1.278194     sMRI
+ sMRI_640    1.195028     sMRI
+sMRI_1048    1.084157     sMRI
+ sMRI_569    1.029779     sMRI
+sMRI_1038    0.934683     sMRI
+ sMRI_603    0.903438     sMRI
+sMRI_1011    0.804476     sMRI
+ sMRI_648    0.786357     sMRI
+ sMRI_470    0.785562     sMRI
+ sMRI_568    0.760854     sMRI
+ sMRI_535    0.752856     sMRI
+ sMRI_574    0.614928     sMRI
+ sMRI_537    0.614311     sMRI
+ sMRI_588    0.515861     sMRI
+ sMRI_590    0.492614     sMRI
+ sMRI_663    0.463872     sMRI
+ fMRI_496    1.159682     fMRI
+ fMRI_450    0.479486     fMRI
+fMRI_1900    0.386936     fMRI
+fMRI_1562    0.366686     fMRI
+ fMRI_479    0.347569     fMRI
+fMRI_4091    0.318946     fMRI
+ fMRI_461    0.282970     fMRI
+fMRI_2031    0.273374     fMRI
+fMRI_4285    0.237489     fMRI
+fMRI_1019    0.220935     fMRI
+fMRI_3127    0.203474     fMRI
+ fMRI_470    0.195420     fMRI
+fMRI_1556    0.193878     fMRI
+fMRI_1827    0.190433     fMRI
+fMRI_2707    0.189015     fMRI
+fMRI_3309    0.178144     fMRI
+fMRI_2811    0.167061     fMRI
+ fMRI_437    0.163519     fMRI
+ fMRI_753    0.160922     fMRI
+fMRI_3934    0.160879     fMRI
+fMRI_3065    0.158074     fMRI
+ fMRI_701    0.153211     fMRI
+  fMRI_27    0.153135     fMRI
+fMRI_4331    0.151318     fMRI
+fMRI_1619    0.145128     fMRI
+
+Top Brain Regions (Biomarkers):
+                  Region  Importance
+WMPARC_460_WM_prefrontal   13.804364
+  WMPARC_561_WM_temporal   10.574007
+  WMPARC_467_WM_parietal    4.305712
+  WMPARC_427_WM_parietal    2.644163
+  WMPARC_391_WM_temporal    2.619603
+ WMPARC_528_WM_occipital    2.209158
+  WMPARC_557_WM_parietal    1.846616
+ WMPARC_548_WM_occipital    1.841982
+    WMPARC_469_WM_limbic    1.290092
+WMPARC_930_WM_prefrontal    1.278194
+  WMPARC_527_WM_parietal    1.195028
+WMPARC_935_WM_prefrontal    1.084157
+  WMPARC_456_WM_temporal    1.029779
+WMPARC_925_WM_prefrontal    0.934683
+WMPARC_490_WM_prefrontal    0.903438
+ WMPARC_898_WM_occipital    0.804476
+WMPARC_535_WM_prefrontal    0.786357
+  WMPARC_357_WM_parietal    0.785562
+WMPARC_455_WM_prefrontal    0.760854
+  WMPARC_422_WM_parietal    0.752856
+
+============================================================
+FINAL RESULTS
+============================================================
+Average Validation Accuracy: 0.6035
+Average Test Accuracy:       0.5710
+Average Balanced Accuracy:   0.5595  ← More robust to imbalance
+Average Macro F1-Score:      0.4867     ← More robust to imbalance
+Overall AUC:                 0.5855
+Total Test Samples:          870
+Results saved to /root/Multimoda-braingnn/results/save_models/CC200_sMRI/with_ComBat/results.csv
+
+================================================================================
+TRAINING COMPLETE ✓ [DATA LEAKAGE FIXED]
+================================================================================
