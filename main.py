@@ -17,7 +17,10 @@ from model_utils import (feature_selection_fmri, feature_selection_smri,
                         train_catboost, evaluate_model, save_model)
 from visualization import (plot_roc_curve, plot_confusion_matrix, 
                           plot_training_history, plot_ensemble_comparison,
-                          print_classification_report, save_results_to_csv)
+                          print_classification_report, save_results_to_csv,
+                          plot_roc_per_fold, plot_feature_importance, plot_class_distribution,
+                          plot_site_performance, plot_clinical_metrics, 
+                          plot_modality_feature_importance, plot_brain_region_contribution)
 
 
 def set_seed(seed=0):
@@ -356,6 +359,64 @@ def main():
     
     # Print classification report
     print_classification_report(all_test_labels, all_test_preds)
+
+    # Additional visualizations
+    # ROC per fold
+    fig_path = os.path.join(config.SAVE_PATH, 'figures/roc_per_fold.png')
+    mean_fold_auc = plot_roc_per_fold(fold_results, save_path=fig_path, title='ROC Curves per Fold')
+    print(f"Mean AUC across folds: {mean_fold_auc:.4f}")
+
+    # Feature importance (average across folds)
+    models = [r['model'] for r in fold_results if r.get('model') is not None]
+    if len(models) > 0:
+        fig_path = os.path.join(config.SAVE_PATH, 'figures/feature_importance.png')
+        plot_feature_importance(models, top_n=30, save_path=fig_path)
+
+    # Class distribution per fold
+    fig_path = os.path.join(config.SAVE_PATH, 'figures/class_distribution.png')
+    plot_class_distribution(fold_indices, labels, save_path=fig_path)
+
+    # NEUROSCIENCE-FOCUSED VISUALIZATIONS
+    print("\n" + "="*60)
+    print("NEUROSCIENCE BIOMARKER ANALYSIS")
+    print("="*60)
+
+    # Site performance (no overfitting to specific scanners)
+    fig_path = os.path.join(config.SAVE_PATH, 'figures/site_performance.png')
+    site_stats = plot_site_performance(sites, labels, all_test_preds, all_test_probs, save_path=fig_path)
+    print("\nSite Performance (Generalization across hospitals/scanners):")
+    print(site_stats.to_string(index=False))
+
+    # Clinical metrics with confusion matrix interpretation
+    fig_path = os.path.join(config.SAVE_PATH, 'figures/clinical_metrics.png')
+    plot_clinical_metrics(all_test_labels, all_test_preds, all_test_probs, save_path=fig_path)
+
+    # Modality-specific feature importance (structural vs functional biomarkers)
+    fig_path = os.path.join(config.SAVE_PATH, 'figures/modality_importance.png')
+    if len(models) > 0:
+        modality_imp = plot_modality_feature_importance(
+            models, 
+            n_features_fmri=config.NEW_FEATURES_FMRI,
+            n_features_smri=config.NEW_FEATURES_SMRI,
+            top_n=25,
+            save_path=fig_path
+        )
+        if modality_imp is not None:
+            print("\nTop Features by Modality:")
+            print(modality_imp.to_string(index=False))
+
+    # Brain region contribution (neuroscience value)
+    fig_path = os.path.join(config.SAVE_PATH, 'figures/brain_regions.png')
+    if len(models) > 0:
+        brain_contrib = plot_brain_region_contribution(
+            models,
+            n_features_smri=config.NEW_FEATURES_SMRI,
+            top_n=20,
+            save_path=fig_path
+        )
+        if brain_contrib is not None:
+            print("\nTop Brain Regions (Biomarkers):")
+            print(brain_contrib.to_string(index=False))
     
     # Save results
     avg_val_acc = np.mean([r['val_acc'] for r in fold_results])
