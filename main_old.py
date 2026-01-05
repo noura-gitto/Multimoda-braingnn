@@ -106,90 +106,6 @@ def create_fold_splits(sites, labels, unique_sites, k_fold=5):
     return fold_indices
 
 
-def apply_combat_per_fold(fmri_data, smri_data, sites, labels, genders, ages, 
-                          unique_sites, fold_indices, fold_idx, combat_fmri, combat_smri):
-    """
-    CRITICAL FIX: Apply ComBat harmonization using ONLY training data parameters.
-    
-    ComBat learns the site effects from training data and applies them to val/test.
-    This prevents leakage of test set information.
-    
-    Args:
-        fmri_data, smri_data: original data (all samples)
-        sites, labels, genders, ages, unique_sites: metadata for all samples
-        fold_indices: fold split indices
-        fold_idx: current fold number
-        combat_fmri, combat_smri: flags to apply ComBat
-    
-    Returns:
-        fmri_harmonized, smri_harmonized: ComBat-adjusted data for this fold
-    """
-    from neuroCombat import neuroCombat
-    import pandas as pd
-    
-    train_ind = np.array(fold_indices[fold_idx]['train'])
-    val_ind = np.array(fold_indices[fold_idx]['val'])
-    test_ind = np.array(fold_indices[fold_idx]['test'])
-    
-    # Initialize with original data
-    fmri_harmonized = fmri_data.copy()
-    smri_harmonized = smri_data.copy()
-    
-    if combat_fmri:
-        print("  Applying ComBat harmonization to fMRI (using TRAINING data only)...")
-        
-        sites_np = np.array(sites)
-        # Build design matrix using ONLY training data
-        batch_train = [get_index(unique_sites.tolist(), site)[0] + 1 for site in sites_np[train_ind]]
-        covars_train = pd.DataFrame({
-            'batch': batch_train,
-            'labels': [int(l) + 1 for l in labels[train_ind]],
-            'genders': genders[train_ind].flatten(),
-            'ages': ages[train_ind].flatten()
-        })
-        
-        # Learn ComBat parameters from training data
-        combat_result = neuroCombat(
-            dat=fmri_data[train_ind, :].T,
-            covars=covars_train,
-            batch_col='batch',
-            categorical_cols=['labels', 'genders'],
-            continuous_cols=['ages']
-        )
-
-        if isinstance(combat_result, dict):
-            fmri_harmonized[train_ind, :] = combat_result['data'].T
-        else:
-            fmri_harmonized[train_ind, :] = combat_result.T
-        
-    if combat_smri:
-        print("  Applying ComBat harmonization to sMRI (using TRAINING data only)...")
-        
-        sites_np = np.array(sites)
-        batch_train = [get_index(unique_sites.tolist(), site)[0] + 1 for site in sites_np[train_ind]]
-        covars_train = pd.DataFrame({
-            'batch': batch_train,
-            'labels': [int(l) + 1 for l in labels[train_ind]],
-            'genders': genders[train_ind].flatten(),
-            'ages': ages[train_ind].flatten()
-        })
-        
-        combat_result = neuroCombat(
-            dat=smri_data[train_ind, :].T,
-            covars=covars_train,
-            batch_col='batch',
-            categorical_cols=['labels', 'genders'],
-            continuous_cols=['ages']
-        )
-        
-        if isinstance(combat_result, dict):
-            smri_harmonized[train_ind, :] = combat_result['data'].T
-        else:
-            smri_harmonized[train_ind, :] = combat_result.T
-    
-    return fmri_harmonized, smri_harmonized
-
-
 def prepare_combined_features(fmri_data, smri_data, labels, train_ind, 
                               val_ind, test_ind, config):
     """
@@ -354,6 +270,16 @@ def main():
     print(f"  Labels: {labels.shape}")
     print(f"  Unique sites: {len(unique_sites)}")
     
+    # Apply ComBat harmonization
+    print("\n" + "="*60)
+    print("HARMONIZATION")
+    print("="*60)
+    
+    fmri_data = apply_combat(fmri_data, sites, labels, genders, ages, 
+                            unique_sites, config.COMBAT_FMRI)
+    smri_data = apply_combat(smri_data, sites, labels, genders, ages,
+                            unique_sites, config.COMBAT_SMRI)
+    
     # Create fold splits
     print("\n" + "="*60)
     print("CREATING FOLD SPLITS")
@@ -363,31 +289,20 @@ def main():
         sites, labels, unique_sites, config.K_FOLD
     )
     
-    # Train models for each fold with per-fold ComBat
+    # Prepare combined features for each fold
     print("\n" + "="*60)
-    print("TRAINING MODELS")
+    print("FEATURE SELECTION")
     print("="*60)
     
     data = {}
     for fold in range(config.K_FOLD):
-        print(f"\nFold {fold + 1}: Harmonization, Feature Selection")
-        
-        # STEP 1: Apply ComBat PER FOLD using only training data (FIX DATA LEAKAGE)
-        print(f"  Step 1: ComBat Harmonization (Fold {fold + 1})")
-        fmri_harmonized, smri_harmonized = apply_combat_per_fold(
-            fmri_data, smri_data, sites, labels, genders, ages, 
-            unique_sites, fold_indices, fold,
-            config.COMBAT_FMRI, config.COMBAT_SMRI
-        )
-        
-        # STEP 2: Feature selection per fold
-        print(f"  Step 2: Feature Selection (Fold {fold + 1})")
+        print(f"\nFold {fold + 1}: Feature selection...")
         train_ind = np.array(fold_indices[fold]['train'])
         val_ind = np.array(fold_indices[fold]['val'])
         test_ind = np.array(fold_indices[fold]['test'])
         
         data[fold] = prepare_combined_features(
-            fmri_harmonized, smri_harmonized, labels,
+            fmri_data, smri_data, labels,
             train_ind, val_ind, test_ind,
             config
         )
