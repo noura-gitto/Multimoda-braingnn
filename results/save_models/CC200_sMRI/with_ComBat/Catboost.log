@@ -1,5 +1,5 @@
 ================================================================================
-Multimodal Brain ASD Classification with CatBoost [FIXED DATA LEAKAGE]
+Multimodal Brain ASD Classification with CatBoost
 ================================================================================
 
 ✓ Reproducibility seeds set (random_state=0)
@@ -8,7 +8,6 @@ Working directory: /root/Multimoda-braingnn
 fMRI Atlas: CC200
 ComBat fMRI: True
 ComBat sMRI: True
-Cross-validation: 5-Fold
 
 ============================================================
 LOADING DATA
@@ -68,11 +67,8 @@ Fold 5 - Sample distribution:
 TRAINING MODELS
 ============================================================
 
-============================================================
-FOLD 1: HARMONIZATION, FEATURE SELECTION, TRAINING
-============================================================
-
-Step 1: Harmonization (Fold 1)
+Fold 1: Harmonization, Feature Selection
+  Step 1: ComBat Harmonization (Fold 1)
   Applying ComBat harmonization to fMRI (using TRAINING data only)...
 [neuroCombat] Creating design matrix
 [neuroCombat] Standardizing data across features
@@ -85,9 +81,80 @@ Step 1: Harmonization (Fold 1)
 [neuroCombat] Fitting L/S model and finding priors
 [neuroCombat] Finding parametric adjustments
 [neuroCombat] Final adjustment of data
-Step 2: Feature Selection (Fold 1)
+  Step 2: Feature Selection (Fold 1)
   Combined features shape: (870, 6000)
-Step 3: Training (Fold 1)
+
+Fold 2: Harmonization, Feature Selection
+  Step 1: ComBat Harmonization (Fold 2)
+  Applying ComBat harmonization to fMRI (using TRAINING data only)...
+[neuroCombat] Creating design matrix
+[neuroCombat] Standardizing data across features
+[neuroCombat] Fitting L/S model and finding priors
+[neuroCombat] Finding parametric adjustments
+[neuroCombat] Final adjustment of data
+  Applying ComBat harmonization to sMRI (using TRAINING data only)...
+[neuroCombat] Creating design matrix
+[neuroCombat] Standardizing data across features
+[neuroCombat] Fitting L/S model and finding priors
+[neuroCombat] Finding parametric adjustments
+[neuroCombat] Final adjustment of data
+  Step 2: Feature Selection (Fold 2)
+  Combined features shape: (870, 6000)
+
+Fold 3: Harmonization, Feature Selection
+  Step 1: ComBat Harmonization (Fold 3)
+  Applying ComBat harmonization to fMRI (using TRAINING data only)...
+[neuroCombat] Creating design matrix
+[neuroCombat] Standardizing data across features
+[neuroCombat] Fitting L/S model and finding priors
+[neuroCombat] Finding parametric adjustments
+[neuroCombat] Final adjustment of data
+  Applying ComBat harmonization to sMRI (using TRAINING data only)...
+[neuroCombat] Creating design matrix
+[neuroCombat] Standardizing data across features
+[neuroCombat] Fitting L/S model and finding priors
+[neuroCombat] Finding parametric adjustments
+[neuroCombat] Final adjustment of data
+  Step 2: Feature Selection (Fold 3)
+  Combined features shape: (870, 6000)
+
+Fold 4: Harmonization, Feature Selection
+  Step 1: ComBat Harmonization (Fold 4)
+  Applying ComBat harmonization to fMRI (using TRAINING data only)...
+[neuroCombat] Creating design matrix
+[neuroCombat] Standardizing data across features
+[neuroCombat] Fitting L/S model and finding priors
+[neuroCombat] Finding parametric adjustments
+[neuroCombat] Final adjustment of data
+  Applying ComBat harmonization to sMRI (using TRAINING data only)...
+[neuroCombat] Creating design matrix
+[neuroCombat] Standardizing data across features
+[neuroCombat] Fitting L/S model and finding priors
+[neuroCombat] Finding parametric adjustments
+[neuroCombat] Final adjustment of data
+  Step 2: Feature Selection (Fold 4)
+  Combined features shape: (870, 6000)
+
+Fold 5: Harmonization, Feature Selection
+  Step 1: ComBat Harmonization (Fold 5)
+  Applying ComBat harmonization to fMRI (using TRAINING data only)...
+[neuroCombat] Creating design matrix
+[neuroCombat] Standardizing data across features
+[neuroCombat] Fitting L/S model and finding priors
+[neuroCombat] Finding parametric adjustments
+[neuroCombat] Final adjustment of data
+  Applying ComBat harmonization to sMRI (using TRAINING data only)...
+[neuroCombat] Creating design matrix
+[neuroCombat] Standardizing data across features
+[neuroCombat] Fitting L/S model and finding priors
+[neuroCombat] Finding parametric adjustments
+[neuroCombat] Final adjustment of data
+  Step 2: Feature Selection (Fold 5)
+  Combined features shape: (870, 6000)
+
+============================================================
+TRAINING MODELS
+============================================================
 
 ============================================================
 Training Fold 1
@@ -101,30 +168,7 @@ Best learning rate: 0.001
 Best depth:         4
 Validation acc:     0.2789
 Test accuracy:      0.4780
-Balanced accuracy:  0.5046
-Macro F1-Score:     0.3410
 Model saved to /root/Multimoda-braingnn/results/save_models/CC200_sMRI/with_ComBat/CAT_1.m
-
-============================================================
-FOLD 2: HARMONIZATION, FEATURE SELECTION, TRAINING
-============================================================
-
-Step 1: Harmonization (Fold 2)
-  Applying ComBat harmonization to fMRI (using TRAINING data only)...
-[neuroCombat] Creating design matrix
-[neuroCombat] Standardizing data across features
-[neuroCombat] Fitting L/S model and finding priors
-[neuroCombat] Finding parametric adjustments
-[neuroCombat] Final adjustment of data
-  Applying ComBat harmonization to sMRI (using TRAINING data only)...
-[neuroCombat] Creating design matrix
-[neuroCombat] Standardizing data across features
-[neuroCombat] Fitting L/S model and finding priors
-[neuroCombat] Finding parametric adjustments
-[neuroCombat] Final adjustment of data
-Step 2: Feature Selection (Fold 2)
-  Combined features shape: (870, 6000)
-Step 3: Training (Fold 2)
 
 ============================================================
 Training Fold 2
@@ -138,30 +182,7 @@ Best learning rate: 0.1
 Best depth:         4
 Validation acc:     0.6149
 Test accuracy:      0.6497
-Balanced accuracy:  0.6492
-Macro F1-Score:     0.6492
 Model saved to /root/Multimoda-braingnn/results/save_models/CC200_sMRI/with_ComBat/CAT_2.m
-
-============================================================
-FOLD 3: HARMONIZATION, FEATURE SELECTION, TRAINING
-============================================================
-
-Step 1: Harmonization (Fold 3)
-  Applying ComBat harmonization to fMRI (using TRAINING data only)...
-[neuroCombat] Creating design matrix
-[neuroCombat] Standardizing data across features
-[neuroCombat] Fitting L/S model and finding priors
-[neuroCombat] Finding parametric adjustments
-[neuroCombat] Final adjustment of data
-  Applying ComBat harmonization to sMRI (using TRAINING data only)...
-[neuroCombat] Creating design matrix
-[neuroCombat] Standardizing data across features
-[neuroCombat] Fitting L/S model and finding priors
-[neuroCombat] Finding parametric adjustments
-[neuroCombat] Final adjustment of data
-Step 2: Feature Selection (Fold 3)
-  Combined features shape: (870, 6000)
-Step 3: Training (Fold 3)
 
 ============================================================
 Training Fold 3
@@ -175,30 +196,7 @@ Best learning rate: 0.001
 Best depth:         4
 Validation acc:     0.7230
 Test accuracy:      0.5402
-Balanced accuracy:  0.5062
-Macro F1-Score:     0.3618
 Model saved to /root/Multimoda-braingnn/results/save_models/CC200_sMRI/with_ComBat/CAT_3.m
-
-============================================================
-FOLD 4: HARMONIZATION, FEATURE SELECTION, TRAINING
-============================================================
-
-Step 1: Harmonization (Fold 4)
-  Applying ComBat harmonization to fMRI (using TRAINING data only)...
-[neuroCombat] Creating design matrix
-[neuroCombat] Standardizing data across features
-[neuroCombat] Fitting L/S model and finding priors
-[neuroCombat] Finding parametric adjustments
-[neuroCombat] Final adjustment of data
-  Applying ComBat harmonization to sMRI (using TRAINING data only)...
-[neuroCombat] Creating design matrix
-[neuroCombat] Standardizing data across features
-[neuroCombat] Fitting L/S model and finding priors
-[neuroCombat] Finding parametric adjustments
-[neuroCombat] Final adjustment of data
-Step 2: Feature Selection (Fold 4)
-  Combined features shape: (870, 6000)
-Step 3: Training (Fold 4)
 
 ============================================================
 Training Fold 4
@@ -212,30 +210,7 @@ Best learning rate: 0.001
 Best depth:         4
 Validation acc:     0.6892
 Test accuracy:      0.6000
-Balanced accuracy:  0.5892
-Macro F1-Score:     0.5888
 Model saved to /root/Multimoda-braingnn/results/save_models/CC200_sMRI/with_ComBat/CAT_4.m
-
-============================================================
-FOLD 5: HARMONIZATION, FEATURE SELECTION, TRAINING
-============================================================
-
-Step 1: Harmonization (Fold 5)
-  Applying ComBat harmonization to fMRI (using TRAINING data only)...
-[neuroCombat] Creating design matrix
-[neuroCombat] Standardizing data across features
-[neuroCombat] Fitting L/S model and finding priors
-[neuroCombat] Finding parametric adjustments
-[neuroCombat] Final adjustment of data
-  Applying ComBat harmonization to sMRI (using TRAINING data only)...
-[neuroCombat] Creating design matrix
-[neuroCombat] Standardizing data across features
-[neuroCombat] Fitting L/S model and finding priors
-[neuroCombat] Finding parametric adjustments
-[neuroCombat] Final adjustment of data
-Step 2: Feature Selection (Fold 5)
-  Combined features shape: (870, 6000)
-Step 3: Training (Fold 5)
 
 ============================================================
 Training Fold 5
@@ -249,8 +224,6 @@ Best learning rate: 0.2
 Best depth:         8
 Validation acc:     0.7114
 Test accuracy:      0.5868
-Balanced accuracy:  0.5486
-Macro F1-Score:     0.4925
 Model saved to /root/Multimoda-braingnn/results/save_models/CC200_sMRI/with_ComBat/CAT_5.m
 
 ============================================================
@@ -378,12 +351,10 @@ FINAL RESULTS
 ============================================================
 Average Validation Accuracy: 0.6035
 Average Test Accuracy:       0.5710
-Average Balanced Accuracy:   0.5595  ← More robust to imbalance
-Average Macro F1-Score:      0.4867     ← More robust to imbalance
 Overall AUC:                 0.5855
 Total Test Samples:          870
 Results saved to /root/Multimoda-braingnn/results/save_models/CC200_sMRI/with_ComBat/results.csv
 
 ================================================================================
-TRAINING COMPLETE ✓ [DATA LEAKAGE FIXED]
+TRAINING COMPLETE ✓
 ================================================================================
