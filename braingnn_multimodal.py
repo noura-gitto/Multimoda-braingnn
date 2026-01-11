@@ -420,10 +420,10 @@ class sMRIBranch(nn.Module):
 
 class PhenotypicBranch(nn.Module):
     """
-    Embedding branch for phenotypic data (age, gender, FIQ, site)
+    Embedding branch for phenotypic data (age, gender, site)
     """
     def __init__(self, num_sites: int = 20, age_dim: int = 16, 
-                 gender_dim: int = 8, fiq_dim: int = 16):
+                 gender_dim: int = 8):
         super(PhenotypicBranch, self).__init__()
         
         # Site embedding (for domain adaptation)
@@ -439,15 +439,8 @@ class PhenotypicBranch(nn.Module):
         # Gender embedding (categorical)
         self.gender_embedding = nn.Embedding(3, gender_dim)  # 0=unknown, 1=M, 2=F
         
-        # FIQ encoding (continuous variable)
-        self.fiq_encoder = nn.Sequential(
-            nn.Linear(1, fiq_dim),
-            nn.ReLU(),
-            nn.Linear(fiq_dim, fiq_dim)
-        )
-        
         # Combine all phenotypic features
-        total_dim = 32 + age_dim + gender_dim + fiq_dim
+        total_dim = 32 + age_dim + gender_dim
         self.fc = nn.Sequential(
             nn.Linear(total_dim, 64),
             nn.ReLU(),
@@ -456,13 +449,12 @@ class PhenotypicBranch(nn.Module):
         )
 
     def forward(self, site: torch.Tensor, age: torch.Tensor, 
-                gender: torch.Tensor, fiq: torch.Tensor) -> torch.Tensor:
+                gender: torch.Tensor) -> torch.Tensor:
         """
         Args:
             site: (batch_size,) - site indices
             age: (batch_size, 1) - age values
             gender: (batch_size,) - gender indices
-            fiq: (batch_size, 1) - FIQ values
         Returns:
             output: (batch_size, 64)
         """
@@ -470,10 +462,9 @@ class PhenotypicBranch(nn.Module):
         site_emb = self.site_embedding(site)
         age_emb = self.age_encoder(age)
         gender_emb = self.gender_embedding(gender)
-        fiq_emb = self.fiq_encoder(fiq)
         
         # Concatenate all features
-        combined = torch.cat([site_emb, age_emb, gender_emb, fiq_emb], dim=1)
+        combined = torch.cat([site_emb, age_emb, gender_emb], dim=1)
         
         # Project to output dimension
         output = self.fc(combined)
@@ -650,8 +641,7 @@ class BrainGNNMultimodal(nn.Module):
         )
 
     def forward(self, fmri_data: torch.Tensor, smri_data: torch.Tensor,
-                site: torch.Tensor, age: torch.Tensor, gender: torch.Tensor, 
-                fiq: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, dict]:
+                site: torch.Tensor, age: torch.Tensor, gender: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, dict]:
         """
         Forward pass through the entire model
         
@@ -661,7 +651,6 @@ class BrainGNNMultimodal(nn.Module):
             site: (batch_size,) - Site indices
             age: (batch_size, 1) - Age values
             gender: (batch_size,) - Gender indices
-            fiq: (batch_size, 1) - FIQ values
             
         Returns:
             class_logits: (batch_size, 2) - Classification logits
@@ -672,7 +661,7 @@ class BrainGNNMultimodal(nn.Module):
         # Process each modality
         fmri_features, fmri_attention = self.fmri_branch(fmri_data)
         smri_features, smri_attention = self.smri_branch(smri_data)
-        pheno_features = self.pheno_branch(site, age, gender, fiq)
+        pheno_features = self.pheno_branch(site, age, gender)
         
         # Multimodal fusion
         fused_features = self.fusion(fmri_features, smri_features, pheno_features)
@@ -689,14 +678,13 @@ class BrainGNNMultimodal(nn.Module):
         return class_logits, site_logits, age_pred, attention_dict
 
     def get_embeddings(self, fmri_data: torch.Tensor, smri_data: torch.Tensor,
-                      site: torch.Tensor, age: torch.Tensor, gender: torch.Tensor, 
-                      fiq: torch.Tensor) -> torch.Tensor:
+                      site: torch.Tensor, age: torch.Tensor, gender: torch.Tensor) -> torch.Tensor:
         """
         Get fused embeddings for visualization or further analysis
         """
         fmri_features, _ = self.fmri_branch(fmri_data)
         smri_features, _ = self.smri_branch(smri_data)
-        pheno_features = self.pheno_branch(site, age, gender, fiq)
+        pheno_features = self.pheno_branch(site, age, gender)
         fused_features = self.fusion(fmri_features, smri_features, pheno_features)
         return fused_features
 
@@ -740,8 +728,6 @@ if __name__ == "__main__":
     site = torch.randint(0, num_sites, (batch_size,))
     age = torch.randn(batch_size, 1) * 10 + 20  # Age around 20
     gender = torch.randint(0, 2, (batch_size,))
-    fiq = torch.randn(batch_size, 1) * 15 + 100  # IQ around 100
-    
     # Create model
     config = {
         'num_nodes': num_nodes,
@@ -754,7 +740,7 @@ if __name__ == "__main__":
     
     # Forward pass
     class_logits, site_logits, age_pred, attention_dict = model(
-        fmri_data, smri_data, site, age, gender, fiq
+        fmri_data, smri_data, site, age, gender
     )
     
     print(f"Class logits shape: {class_logits.shape}")
