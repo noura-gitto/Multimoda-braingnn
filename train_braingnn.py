@@ -831,7 +831,7 @@ if __name__ == "__main__":
         'lambda_site': 0.05,
         
         # Paths
-        'save_dir': './results',
+        'save_dir': './results_GNN',
         'data_dir': './data'
     }
     
