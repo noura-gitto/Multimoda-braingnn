@@ -15,7 +15,6 @@ import logging
 from tqdm import tqdm
 import random
 import math
-import re
 
 # PyTorch imports
 import torch
@@ -84,7 +83,7 @@ class ABIDEDataset(Dataset):
                  sites: np.ndarray,
                  ages: np.ndarray,
                  genders: np.ndarray,
-                 # fiq removed
+                 fiqs: np.ndarray,
                  indices: List[int],
                  site_to_idx: Dict[str, int],
                  augment: bool = False):
@@ -104,19 +103,10 @@ class ABIDEDataset(Dataset):
         self.fmri_data = fmri_data[indices]
         self.smri_data = smri_data[indices]
         self.labels = labels[indices]
-        # Map site names to indices
         self.sites = np.array([site_to_idx[sites[i]] for i in indices])
-
-        # Normalize continuous phenotypic variables (global z-score)
-        # Compute global statistics from the full arrays (not just indices)
-        try:
-            age_mean = float(np.nanmean(ages))
-            age_std = float(np.nanstd(ages)) + 1e-8
-        except:
-            age_mean, age_std = 0.0, 1.0
-
-        self.ages = (ages[indices] - age_mean) / age_std
+        self.ages = ages[indices]
         self.genders = genders[indices]
+        self.fiqs = fiqs[indices]
         self.augment = augment
         
     def __len__(self):
@@ -149,7 +139,8 @@ class ABIDEDataset(Dataset):
             'label': torch.LongTensor([self.labels[idx]])[0],
             'site': torch.LongTensor([self.sites[idx]])[0],
             'age': torch.FloatTensor([self.ages[idx]]),
-            'gender': torch.LongTensor([self.genders[idx]])[0]
+            'gender': torch.LongTensor([self.genders[idx]])[0],
+            'fiq': torch.FloatTensor([self.fiqs[idx]])
         }
 
 
@@ -195,55 +186,62 @@ def load_smri_data(freesurfer_path: str, subject_IDs: List[str],
     """
     logger.info(f"Loading sMRI data from {freesurfer_path}")
     
-    # Robust parser: extract all floating-point numbers from relevant stats files
-    def parse_stats_file(file_path: str) -> List[float]:
-        nums: List[float] = []
-        try:
-            with open(file_path, 'r', encoding='utf-8', errors='ignore') as fh:
-                for line in fh:
-                    # Find all numbers in the line (integers and floats)
-                    found = re.findall(r"[-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?", line)
-                    for v in found:
-                        try:
-                            nums.append(float(v))
-                        except:
-                            continue
-        except Exception as e:
-            logger.debug(f"Failed to parse {file_path}: {e}")
-        return nums
-
-    all_features: List[List[float]] = []
-
+    # Feature configurations
+    parcellations = {
+        'desikan_killiany': {
+            'files': ['lh.aparc.stats', 'rh.aparc.stats'],
+            'features': ['NumVert', 'SurfArea', 'GrayVol', 'ThickAvg', 'ThickStd', 
+                        'MeanCurv', 'GausCurv', 'FoldInd', 'CurvInd'],
+            'skiprows': list(range(61))
+        },
+        'aseg': {
+            'files': ['aseg.stats'],
+            'features': ['Number of Voxels', 'Volume', 'Intensity normMean', 
+                        'Itensity normStdDev', 'Intensity normMin', 
+                        'Intensity normMax', 'Intensity normRange'],
+            'skiprows': list(range(79))
+        }
+    }
+    
+    all_features = []
+    
     for i, subject_id in enumerate(tqdm(subject_IDs, desc="Loading sMRI")):
-        subject_features: List[float] = []
-        subject_dir = os.path.join(freesurfer_path, subject_id)
-
-        # Try common files
-        for fname in ['lh.aparc.stats', 'rh.aparc.stats', 'aseg.stats', 'lh.aparc.pial.stats', 'rh.aparc.pial.stats']:
-            file_path = os.path.join(subject_dir, fname)
-            if os.path.exists(file_path):
-                parsed = parse_stats_file(file_path)
-                if parsed:
-                    subject_features.extend(parsed)
-
-        if len(subject_features) == 0:
-            logger.debug(f"No sMRI features parsed for {subject_id}; leaving empty vector")
-
+        subject_features = []
+        
+        try:
+            subject_dir = os.path.join(freesurfer_path, subject_id)
+            
+            # Load Desikan-Killiany features
+            for hemi_file in parcellations['desikan_killiany']['files']:
+                file_path = os.path.join(subject_dir, hemi_file)
+                if os.path.exists(file_path):
+                    df = pd.read_table(file_path, sep='\s+', 
+                                     skiprows=parcellations['desikan_killiany']['skiprows'])
+                    for feat in parcellations['desikan_killiany']['features']:
+                        if feat in df.columns:
+                            subject_features.extend(df[feat].values)
+            
+            # Load aseg features
+            aseg_file = os.path.join(subject_dir, 'aseg.stats')
+            if os.path.exists(aseg_file):
+                df = pd.read_table(aseg_file, sep='\s+', 
+                                 skiprows=parcellations['aseg']['skiprows'])
+                for feat in parcellations['aseg']['features']:
+                    if feat in df.columns:
+                        subject_features.extend(df[feat].values)
+            
+        except Exception as e:
+            logger.warning(f"Error loading sMRI for {subject_id}: {e}")
+        
         all_features.append(subject_features)
-
+    
     # Convert to numpy array and handle variable lengths
-    if len(all_features) == 0:
-        smri_data = np.zeros((len(subject_IDs), 0))
-    else:
-        max_len = max((len(f) for f in all_features), default=0)
-        if max_len == 0:
-            smri_data = np.zeros((len(subject_IDs), 0))
-        else:
-            smri_data = np.zeros((len(subject_IDs), max_len))
-            for i, features in enumerate(all_features):
-                if len(features) > 0:
-                    smri_data[i, :len(features)] = features
-
+    max_len = max(len(f) for f in all_features)
+    smri_data = np.zeros((len(subject_IDs), max_len))
+    
+    for i, features in enumerate(all_features):
+        smri_data[i, :len(features)] = features
+    
     logger.info(f"Loaded sMRI data shape: {smri_data.shape}")
     return smri_data
 
@@ -269,7 +267,13 @@ def load_phenotypic_data(pheno_dir: str, num_subjects: int,
     genders = scio.loadmat(os.path.join(pheno_dir, 'genders.mat'))['genders'].flatten()
     genders = np.array([int(g) for g in genders])
     
-    # FIQ removed — do not load or return FIQ values
+    # Load FIQ
+    try:
+        fiqs = scio.loadmat(os.path.join(pheno_dir, 'FIQS.mat'))['FIQS'].flatten()
+        fiqs = np.array([float(str(f).replace(' ', '')) if str(f).strip() else 100.0 for f in fiqs])
+    except:
+        logger.warning("FIQ data not found, using default values")
+        fiqs = np.ones(num_subjects) * 100.0
     
     # Load sites
     sites = scio.loadmat(os.path.join(pheno_dir, 'sites.mat'))['sites']
@@ -286,6 +290,7 @@ def load_phenotypic_data(pheno_dir: str, num_subjects: int,
         'labels': labels,
         'ages': ages,
         'genders': genders,
+        'fiqs': fiqs,
         'sites': sites,
         'subject_IDs': subject_IDs.tolist()
     }
@@ -375,16 +380,13 @@ class FocalLoss(nn.Module):
         self.alpha = alpha
         self.gamma = gamma
         self.label_smoothing = label_smoothing
-        # Use no reduction so we can compute focal per-sample
-        self.ce = nn.CrossEntropyLoss(reduction='none', label_smoothing=label_smoothing)
+        self.ce = nn.CrossEntropyLoss(label_smoothing=label_smoothing)
 
     def forward(self, inputs, targets):
-        # inputs: (batch, num_classes), targets: (batch,)
-        ce_loss = self.ce(inputs, targets)  # per-sample
+        ce_loss = self.ce(inputs, targets)
         pt = torch.exp(-ce_loss)
         focal_loss = self.alpha * (1 - pt) ** self.gamma * ce_loss
-        # return mean over batch
-        return focal_loss.mean()
+        return focal_loss
 
 class MultiTaskLoss(nn.Module):
     """
@@ -452,9 +454,11 @@ def train_epoch(model: nn.Module, dataloader: DataLoader,
         sites = batch['site'].to(device)
         ages = batch['age'].to(device)
         genders = batch['gender'].to(device)
-        # Forward pass (FIQ removed)
+        fiqs = batch['fiq'].to(device)
+        
+        # Forward pass
         class_logits, site_logits, age_pred, _ = model(
-            fmri, smri, sites, ages, genders
+            fmri, smri, sites, ages, genders, fiqs
         )
         
         # Compute loss
@@ -514,9 +518,11 @@ def evaluate(model: nn.Module, dataloader: DataLoader,
             sites = batch['site'].to(device)
             ages = batch['age'].to(device)
             genders = batch['gender'].to(device)
-            # Forward pass (FIQ removed)
+            fiqs = batch['fiq'].to(device)
+            
+            # Forward pass
             class_logits, site_logits, age_pred, _ = model(
-                fmri, smri, sites, ages, genders
+                fmri, smri, sites, ages, genders, fiqs
             )
             
             # Compute loss
@@ -598,35 +604,6 @@ def train_model(config: Dict, logger: logging.Logger):
         logger
     )
 
-    # -----------------
-    # Normalization
-    # -----------------
-    # fMRI: assume connectivity (correlation) matrices — apply Fisher z and per-subject z-score
-    try:
-        fmri_clipped = np.clip(fmri_data, -0.999, 0.999)
-        fmri_data = np.arctanh(fmri_clipped)  # Fisher z
-        # standardize per-subject
-        fmri_mean = fmri_data.mean(axis=(1,2), keepdims=True)
-        fmri_std = fmri_data.std(axis=(1,2), keepdims=True) + 1e-8
-        fmri_data = (fmri_data - fmri_mean) / fmri_std
-        logger.info('Applied Fisher z and per-subject z-score to fMRI data')
-    except Exception as e:
-        logger.warning(f'Failed to normalize fMRI data: {e}')
-
-    # sMRI: per-feature z-score across subjects
-    try:
-        if smri_data.shape[1] > 0:
-            smri_mean = np.nanmean(smri_data, axis=0, keepdims=True)
-            smri_std = np.nanstd(smri_data, axis=0, keepdims=True) + 1e-8
-            smri_data = (smri_data - smri_mean) / smri_std
-            # replace NaNs (from constant columns) with zeros
-            smri_data = np.nan_to_num(smri_data)
-            logger.info('Applied per-feature z-score to sMRI data')
-        else:
-            logger.info('sMRI data empty — skipping sMRI normalization')
-    except Exception as e:
-        logger.warning(f'Failed to normalize sMRI data: {e}')
-
     # Update config with actual data dimensions
     config['smri_dim'] = smri_data.shape[1]
 
@@ -656,21 +633,21 @@ def train_model(config: Dict, logger: logging.Logger):
         train_dataset = ABIDEDataset(
             fmri_data, smri_data, pheno_data['labels'],
             pheno_data['sites'], pheno_data['ages'], 
-            pheno_data['genders'],
+            pheno_data['genders'], pheno_data['fiqs'],
             fold_splits[fold]['train'], site_to_idx, augment=True
         )
         
         val_dataset = ABIDEDataset(
             fmri_data, smri_data, pheno_data['labels'],
             pheno_data['sites'], pheno_data['ages'], 
-            pheno_data['genders'],
+            pheno_data['genders'], pheno_data['fiqs'],
             fold_splits[fold]['val'], site_to_idx, augment=False
         )
         
         test_dataset = ABIDEDataset(
             fmri_data, smri_data, pheno_data['labels'],
             pheno_data['sites'], pheno_data['ages'], 
-            pheno_data['genders'],
+            pheno_data['genders'], pheno_data['fiqs'],
             fold_splits[fold]['test'], site_to_idx, augment=False
         )
         
@@ -826,9 +803,8 @@ if __name__ == "__main__":
         # Loss weights
         'lambda_cls': 1.0,
         'lambda_site': 0.1,
-        'lambda_age': 0.01,
-        'lambda_reg': 0.0001,
-        'lambda_site': 0.05,
+        'lambda_age': 0.05,
+        'lambda_reg': 0.001,
         
         # Paths
         'save_dir': './results_GNN',
