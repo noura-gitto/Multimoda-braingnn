@@ -17,13 +17,44 @@
         "lambda_site": 0.05,
         "lambda_age": 0.01,
         "lambda_reg": 0.0001,
-        "save_dir": "./results",
+        "save_dir": "./results_GNN",
         "data_dir": "./data"
     },
     "fold_results": [
         {
             "fold": 1,
-            "test_accuracy": 0.6775956284153005,
-            "test_auc": 0.6633900743227044,
-            "test_f1": 0.659234552130727,
-            "test_labels": 
+            "test_accuracy": 0.6557377049180327,
+            "test_auc": 0.6705825941021337,
+            "test_f1": 0.629591201494086
+        },
+        {
+            "fold": 2,
+            "test_accuracy": 0.655367231638418,
+            "test_auc": 0.7273657289002559,
+            "test_f1": 0.6498131720824001
+        },
+        {
+            "fold": 3,
+            "test_accuracy": 0.5919540229885057,
+            "test_auc": 0.6114429842028409,
+            "test_f1": 0.5680385481538633
+        },
+        {
+            "fold": 4,
+            "test_accuracy": 0.6705882352941176,
+            "test_auc": 0.7264837625979843,
+            "test_f1": 0.6628553406582166
+        },
+        {
+            "fold": 5,
+            "test_accuracy": 0.6287425149700598,
+            "test_auc": 0.6447826086956522,
+            "test_f1": 0.6287425149700598
+        }
+    ],
+    "average_metrics": {
+        "accuracy": 0.6404779419618267,
+        "auc": 0.6761315356997735,
+        "f1": 0.6278081554717252
+    }
+}

@@ -184,7 +184,7 @@ class fMRIGraphBranch(nn.Module):
         self.hidden_dim = hidden_dim
         
         # Graph construction parameters
-        self.edge_threshold = 0.2  # Lowered to allow more information flow
+        self.edge_threshold = 0.1  # Lowered to allow more information flow
         
         # Graph convolutional layers
         self.gcn1 = GraphConvolution(num_nodes, hidden_dim)
