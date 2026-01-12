@@ -35,6 +35,18 @@ from sklearn.preprocessing import StandardScaler
 # Import our model
 from braingnn_multimodal import BrainGNNMultimodal, create_model
 
+# Import visualization utilities
+from visualization import (
+    plot_roc_curve,
+    plot_confusion_matrix,
+    plot_training_history,
+    plot_roc_per_fold,
+    plot_site_performance,
+    plot_clinical_metrics,
+    print_classification_report,
+    save_results_to_csv
+)
+
 
 # ============================================================================
 # Setup Logging
@@ -503,6 +515,7 @@ def evaluate(model: nn.Module, dataloader: DataLoader,
     all_preds = []
     all_probs = []
     all_labels = []
+    all_sites = []
     
     with torch.no_grad():
         pbar = tqdm(dataloader, desc=f'{phase}')
@@ -534,6 +547,7 @@ def evaluate(model: nn.Module, dataloader: DataLoader,
             all_preds.extend(preds.cpu().numpy())
             all_probs.extend(probs[:, 1].cpu().numpy())
             all_labels.extend(labels.cpu().numpy())
+            all_sites.extend(sites.cpu().numpy())
     
     # Compute metrics
     accuracy = accuracy_score(all_labels, all_preds)
@@ -552,7 +566,10 @@ def evaluate(model: nn.Module, dataloader: DataLoader,
         'f1': f1,
         'predictions': all_preds,
         'probabilities': all_probs,
-        'labels': all_labels
+        'labels': all_labels,
+        'sites': all_sites,
+        'test_labels': all_labels,
+        'test_probs': np.column_stack([1 - np.array(all_probs), np.array(all_probs)])
     }
     
     return metrics
@@ -759,11 +776,105 @@ def train_model(config: Dict, logger: logging.Logger):
         logger.info(f"AUC: {test_metrics['auc']:.4f}")
         logger.info(f"F1: {test_metrics['f1']:.4f}")
         
+        # =====================================================================
+        # Visualization for this fold
+        # =====================================================================
+        fold_vis_dir = os.path.join(config['save_dir'], f'fold_{fold+1}')
+        os.makedirs(fold_vis_dir, exist_ok=True)
+        
+        # Convert predictions to numpy array for visualization
+        test_preds_array = np.array(test_metrics['predictions'])
+        test_labels_array = np.array(test_metrics['labels'])
+        test_probs_array = test_metrics['test_probs']
+        test_sites_array = np.array(test_metrics['sites'])
+        
+        # Plot ROC curve
+        try:
+            roc_auc = plot_roc_curve(
+                test_labels_array, 
+                test_probs_array,
+                save_path=os.path.join(fold_vis_dir, 'roc_curve.png'),
+                title=f'ROC Curve - Fold {fold+1}'
+            )
+            logger.info(f"Saved ROC curve plot for Fold {fold+1}")
+        except Exception as e:
+            logger.warning(f"Failed to plot ROC curve for Fold {fold+1}: {e}")
+        
+        # Plot confusion matrix
+        try:
+            plot_confusion_matrix(
+                test_labels_array,
+                test_preds_array,
+                save_path=os.path.join(fold_vis_dir, 'confusion_matrix.png'),
+                title=f'Confusion Matrix - Fold {fold+1}'
+            )
+            logger.info(f"Saved confusion matrix plot for Fold {fold+1}")
+        except Exception as e:
+            logger.warning(f"Failed to plot confusion matrix for Fold {fold+1}: {e}")
+        
+        # Print classification report
+        try:
+            logger.info(f"\n{'='*60}")
+            logger.info(f"Classification Report - Fold {fold+1}")
+            logger.info(f"{'='*60}")
+            print_classification_report(test_labels_array, test_preds_array)
+        except Exception as e:
+            logger.warning(f"Failed to print classification report for Fold {fold+1}: {e}")
+        
+        # Plot clinical metrics
+        try:
+            plot_clinical_metrics(
+                test_labels_array,
+                test_preds_array,
+                test_probs_array,
+                save_path=os.path.join(fold_vis_dir, 'clinical_metrics.png')
+            )
+            logger.info(f"Saved clinical metrics plot for Fold {fold+1}")
+        except Exception as e:
+            logger.warning(f"Failed to plot clinical metrics for Fold {fold+1}: {e}")
+        
+        # Create site mapping for visualization
+        idx_to_site = {v: k for k, v in site_to_idx.items()}
+        test_sites_names = np.array([idx_to_site[s] for s in test_sites_array])
+        
+        # Plot site performance
+        try:
+            plot_site_performance(
+                test_sites_names,
+                test_labels_array,
+                test_preds_array,
+                test_probs_array,
+                save_path=os.path.join(fold_vis_dir, 'site_performance.png')
+            )
+            logger.info(f"Saved site performance plot for Fold {fold+1}")
+        except Exception as e:
+            logger.warning(f"Failed to plot site performance for Fold {fold+1}: {e}")
+        
+        # Save fold results to CSV
+        try:
+            fold_results_dict = {
+                'sample_id': range(len(test_labels_array)),
+                'true_label': test_labels_array,
+                'predicted_label': test_preds_array,
+                'prediction_probability': test_probs_array[:, 1],
+                'site': test_sites_names
+            }
+            save_results_to_csv(
+                fold_results_dict,
+                os.path.join(fold_vis_dir, 'fold_results.csv')
+            )
+        except Exception as e:
+            logger.warning(f"Failed to save fold results CSV for Fold {fold+1}: {e}")
+        
         fold_results.append({
             'fold': fold + 1,
             'test_accuracy': test_metrics['accuracy'],
             'test_auc': test_metrics['auc'],
-            'test_f1': test_metrics['f1']
+            'test_f1': test_metrics['f1'],
+            'test_labels': test_labels_array,
+            'test_preds': test_preds_array,
+            'test_probs': test_probs_array,
+            'test_sites': test_sites_array
         })
     
     # Aggregate results
@@ -779,14 +890,150 @@ def train_model(config: Dict, logger: logging.Logger):
     logger.info(f"Average Test AUC: {avg_auc:.4f} ± {np.std([r['test_auc'] for r in fold_results]):.4f}")
     logger.info(f"Average Test F1: {avg_f1:.4f} ± {np.std([r['test_f1'] for r in fold_results]):.4f}")
     
-    # Save results
+    # =========================================================================
+    # Cross-fold Visualization
+    # =========================================================================
+    logger.info(f"\n{'='*50}")
+    logger.info("Generating Cross-Fold Visualizations")
+    logger.info(f"{'='*50}")
+    
+    # Plot ROC curves across all folds
+    try:
+        fold_results_for_roc = [
+            {
+                'test_labels': r['test_labels'],
+                'test_probs': r['test_probs']
+            }
+            for r in fold_results
+        ]
+        mean_auc = plot_roc_per_fold(
+            fold_results_for_roc,
+            save_path=os.path.join(config['save_dir'], 'roc_per_fold.png'),
+            title='ROC Curves Per Fold'
+        )
+        logger.info(f"Saved ROC per fold plot (Mean AUC: {mean_auc:.4f})")
+    except Exception as e:
+        logger.warning(f"Failed to plot ROC per fold: {e}")
+    
+    # Plot training history
+    try:
+        history_dict = {
+            'fold': [r['fold'] for r in fold_results],
+            'val_acc': [r['test_accuracy'] for r in fold_results],  # Using test as val for this plot
+            'test_acc': [r['test_accuracy'] for r in fold_results]
+        }
+        plot_training_history(
+            history_dict,
+            save_path=os.path.join(config['save_dir'], 'training_history.png')
+        )
+        logger.info("Saved training history plot")
+    except Exception as e:
+        logger.warning(f"Failed to plot training history: {e}")
+    
+    # Aggregate predictions from all folds for overall site performance
+    try:
+        all_test_labels = np.concatenate([r['test_labels'] for r in fold_results])
+        all_test_preds = np.concatenate([r['test_preds'] for r in fold_results])
+        all_test_probs = np.vstack([r['test_probs'] for r in fold_results])
+        all_test_sites = np.concatenate([r['test_sites'] for r in fold_results])
+        
+        # Create site mapping for visualization
+        idx_to_site = {v: k for k, v in site_to_idx.items()}
+        all_test_sites_names = np.array([idx_to_site[s] for s in all_test_sites])
+        
+        # Plot overall site performance
+        plot_site_performance(
+            all_test_sites_names,
+            all_test_labels,
+            all_test_preds,
+            all_test_probs,
+            save_path=os.path.join(config['save_dir'], 'overall_site_performance.png')
+        )
+        logger.info("Saved overall site performance plot")
+    except Exception as e:
+        logger.warning(f"Failed to plot overall site performance: {e}")
+    
+    # Plot overall clinical metrics
+    try:
+        plot_clinical_metrics(
+            all_test_labels,
+            all_test_preds,
+            all_test_probs,
+            save_path=os.path.join(config['save_dir'], 'overall_clinical_metrics.png')
+        )
+        logger.info("Saved overall clinical metrics plot")
+    except Exception as e:
+        logger.warning(f"Failed to plot overall clinical metrics: {e}")
+    
+    # Print overall classification report
+    try:
+        logger.info(f"\n{'='*60}")
+        logger.info("Overall Classification Report (All Folds)")
+        logger.info(f"{'='*60}")
+        print_classification_report(all_test_labels, all_test_preds)
+    except Exception as e:
+        logger.warning(f"Failed to print overall classification report: {e}")
+    
+    # Save overall results to CSV
+    try:
+        # Build fold mapping - track which fold each sample belongs to
+        fold_mapping = []
+        for r in fold_results:
+            fold_idx = r['fold']
+            fold_mapping.extend([fold_idx] * len(r['test_labels']))
+        
+        overall_results_dict = {
+            'fold': fold_mapping,
+            'true_label': all_test_labels.astype(int).tolist(),
+            'predicted_label': all_test_preds.astype(int).tolist(),
+            'prediction_probability': all_test_probs[:, 1].astype(float).tolist(),
+            'site': all_test_sites_names.tolist()
+        }
+        save_results_to_csv(
+            overall_results_dict,
+            os.path.join(config['save_dir'], 'overall_results.csv')
+        )
+        logger.info("Saved overall results CSV")
+    except Exception as e:
+        logger.warning(f"Failed to save overall results CSV: {e}")
+    
+    # Save summary results to CSV
+    try:
+        summary_results = {
+            'Metric': ['Accuracy', 'AUC', 'F1-Score'],
+            'Mean': [avg_accuracy, avg_auc, avg_f1],
+            'Std': [
+                np.std([r['test_accuracy'] for r in fold_results]),
+                np.std([r['test_auc'] for r in fold_results]),
+                np.std([r['test_f1'] for r in fold_results])
+            ]
+        }
+        save_results_to_csv(
+            summary_results,
+            os.path.join(config['save_dir'], 'summary_metrics.csv')
+        )
+        logger.info("Saved summary metrics CSV")
+    except Exception as e:
+        logger.warning(f"Failed to save summary metrics CSV: {e}")
+    
+    # Save results - only serialize metrics, not numpy arrays
+    serializable_fold_results = [
+        {
+            'fold': r['fold'],
+            'test_accuracy': float(r['test_accuracy']),
+            'test_auc': float(r['test_auc']),
+            'test_f1': float(r['test_f1'])
+        }
+        for r in fold_results
+    ]
+    
     results = {
         'config': config,
-        'fold_results': fold_results,
+        'fold_results': serializable_fold_results,
         'average_metrics': {
-            'accuracy': avg_accuracy,
-            'auc': avg_auc,
-            'f1': avg_f1
+            'accuracy': float(avg_accuracy),
+            'auc': float(avg_auc),
+            'f1': float(avg_f1)
         }
     }
     
@@ -831,7 +1078,7 @@ if __name__ == "__main__":
         'lambda_site': 0.05,
         
         # Paths
-        'save_dir': './results',
+        'save_dir': './results_GNN',
         'data_dir': './data'
     }
     
