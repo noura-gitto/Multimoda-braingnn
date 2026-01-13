@@ -4,57 +4,57 @@
         "num_nodes": 200,
         "smri_dim": 2072,
         "num_sites": 20,
-        "hidden_dim": 256,
-        "dropout": 0.3,
+        "hidden_dim": 128,
+        "dropout": 0.4,
         "batch_size": 32,
         "learning_rate": 0.0005,
-        "weight_decay": 0.01,
+        "weight_decay": 0.02,
         "epochs": 200,
         "patience": 30,
-        "lambda_cls": 1.0,
         "k_fold": 5,
         "random_seed": 42,
+        "lambda_cls": 5.0,
         "lambda_site": 0.05,
         "lambda_age": 0.01,
-        "lambda_reg": 0.0001,
+        "lambda_reg": 0.001,
         "save_dir": "./results_GNN",
         "data_dir": "./data"
     },
     "fold_results": [
         {
             "fold": 1,
-            "test_accuracy": 0.6557377049180327,
-            "test_auc": 0.6705825941021337,
-            "test_f1": 0.629591201494086
+            "test_accuracy": 0.6284153005464481,
+            "test_auc": 0.6701030927835051,
+            "test_f1": 0.6272736849035486
         },
         {
             "fold": 2,
-            "test_accuracy": 0.655367231638418,
-            "test_auc": 0.7273657289002559,
-            "test_f1": 0.6498131720824001
+            "test_accuracy": 0.632768361581921,
+            "test_auc": 0.6736572890025575,
+            "test_f1": 0.6313588686470043
         },
         {
             "fold": 3,
-            "test_accuracy": 0.5919540229885057,
-            "test_auc": 0.6114429842028409,
-            "test_f1": 0.5680385481538633
+            "test_accuracy": 0.6436781609195402,
+            "test_auc": 0.6975972388158768,
+            "test_f1": 0.643913574396734
         },
         {
             "fold": 4,
-            "test_accuracy": 0.6705882352941176,
-            "test_auc": 0.7264837625979843,
-            "test_f1": 0.6628553406582166
+            "test_accuracy": 0.6,
+            "test_auc": 0.5909854423292273,
+            "test_f1": 0.5851415094339623
         },
         {
             "fold": 5,
-            "test_accuracy": 0.6287425149700598,
-            "test_auc": 0.6447826086956522,
-            "test_f1": 0.6287425149700598
+            "test_accuracy": 0.5209580838323353,
+            "test_auc": 0.5979710144927536,
+            "test_f1": 0.4552622057372127
         }
     ],
     "average_metrics": {
-        "accuracy": 0.6404779419618267,
-        "auc": 0.6761315356997735,
-        "f1": 0.6278081554717252
+        "accuracy": 0.605163981376049,
+        "auc": 0.6460628154847841,
+        "f1": 0.5885899686236924
     }
 }

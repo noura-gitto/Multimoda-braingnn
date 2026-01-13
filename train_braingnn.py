@@ -324,55 +324,50 @@ def create_site_aware_splits(sites: np.ndarray, labels: np.ndarray,
     
     fold_splits = {}
     
+    # Initialize fold splits
     for fold in range(k_fold):
-        train_indices = []
-        val_indices = []
-        test_indices = []
+        fold_splits[fold] = {'train': [], 'val': [], 'test': []}
+
+    # Track small sites to distribute them across folds
+    small_site_fold_counter = 0
+
+    for site in unique_sites:
+        site_mask = sites == site
+        site_indices = np.where(site_mask)[0]
+        site_labels = labels[site_indices]
         
-        for site in unique_sites:
-            site_mask = sites == site
-            site_indices = np.where(site_mask)[0]
-            site_labels = labels[site_indices]
-            
-            # Skip if too few samples
-            if len(site_indices) < k_fold:
-                # Add all to train
-                train_indices.extend(site_indices.tolist())
-                continue
-            
-            # Stratified k-fold for this site
-            skf = StratifiedKFold(n_splits=k_fold, shuffle=True, random_state=random_state)
-            
-            for fold_idx, (train_val, test) in enumerate(skf.split(site_indices, site_labels)):
-                if fold_idx == fold:
-                    # Further split train_val into train and val
-                    train_val_indices = site_indices[train_val]
-                    train_val_labels = site_labels[train_val]
-                    
-                    if len(train_val_indices) >= 2:
-                        val_size = max(1, len(train_val_indices) // 4)
-                        skf_inner = StratifiedKFold(n_splits=min(4, len(train_val_indices)), 
-                                                   shuffle=True, random_state=random_state)
-                        for inner_idx, (train, val) in enumerate(skf_inner.split(train_val_indices, train_val_labels)):
-                            if inner_idx == 0:
-                                train_indices.extend(train_val_indices[train].tolist())
-                                val_indices.extend(train_val_indices[val].tolist())
-                                break
-                    else:
-                        train_indices.extend(train_val_indices.tolist())
-                    
-                    test_indices.extend(site_indices[test].tolist())
-                    break
+        # Handle small sites by assigning them to one fold's training set
+        if len(site_indices) < k_fold:
+            target_fold = small_site_fold_counter % k_fold
+            fold_splits[target_fold]['train'].extend(site_indices.tolist())
+            small_site_fold_counter += 1
+            continue
         
-        fold_splits[fold] = {
-            'train': train_indices,
-            'val': val_indices,
-            'test': test_indices
-        }
+        # Stratified k-fold for larger sites
+        skf = StratifiedKFold(n_splits=k_fold, shuffle=True, random_state=random_state)
         
-        if logger:
-            logger.info(f"Fold {fold+1}: Train={len(train_indices)}, "
-                       f"Val={len(val_indices)}, Test={len(test_indices)}")
+        for fold, (train_val, test) in enumerate(skf.split(site_indices, site_labels)):
+            # Further split train_val into train and val
+            train_val_indices = site_indices[train_val]
+            train_val_labels = site_labels[train_val]
+            
+            if len(train_val_indices) >= 2:
+                skf_inner = StratifiedKFold(n_splits=min(4, len(train_val_indices)), 
+                                           shuffle=True, random_state=random_state)
+                for inner_idx, (train, val) in enumerate(skf_inner.split(train_val_indices, train_val_labels)):
+                    if inner_idx == 0:
+                        fold_splits[fold]['train'].extend(train_val_indices[train].tolist())
+                        fold_splits[fold]['val'].extend(train_val_indices[val].tolist())
+                        break
+            else:
+                fold_splits[fold]['train'].extend(train_val_indices.tolist())
+            
+            fold_splits[fold]['test'].extend(site_indices[test].tolist())
+        
+    if logger:
+        for fold in range(k_fold):
+            logger.info(f"Fold {fold+1}: Train={len(fold_splits[fold]['train'])}, "
+                       f"Val={len(fold_splits[fold]['val'])}, Test={len(fold_splits[fold]['test'])}")
     
     return fold_splits
 
@@ -382,13 +377,13 @@ def create_site_aware_splits(sites: np.ndarray, labels: np.ndarray,
 # ============================================================================
 
 class FocalLoss(nn.Module):
-    def __init__(self, alpha=1, gamma=2, label_smoothing=0.1):
+    def __init__(self, alpha=1, gamma=2, label_smoothing=0.1, weight=None):
         super(FocalLoss, self).__init__()
         self.alpha = alpha
         self.gamma = gamma
         self.label_smoothing = label_smoothing
         # Use no reduction so we can compute focal per-sample
-        self.ce = nn.CrossEntropyLoss(reduction='none', label_smoothing=label_smoothing)
+        self.ce = nn.CrossEntropyLoss(reduction='none', label_smoothing=label_smoothing, weight=weight)
 
     def forward(self, inputs, targets):
         # inputs: (batch, num_classes), targets: (batch,)
@@ -403,14 +398,15 @@ class MultiTaskLoss(nn.Module):
     Multi-task loss with weighted components
     """
     def __init__(self, lambda_cls: float = 5.0, lambda_site: float = 0.1, 
-                 lambda_age: float = 0.05, lambda_reg: float = 0.001):
+                 lambda_age: float = 0.05, lambda_reg: float = 0.001,
+                 class_weights: Optional[torch.Tensor] = None):
         super(MultiTaskLoss, self).__init__()
         self.lambda_cls = lambda_cls
         self.lambda_site = lambda_site
         self.lambda_age = lambda_age
         self.lambda_reg = lambda_reg
         
-        self.cls_criterion = FocalLoss(label_smoothing=0.1)
+        self.cls_criterion = FocalLoss(label_smoothing=0.1, weight=class_weights)
         self.site_criterion = nn.CrossEntropyLoss()
         self.age_criterion = nn.MSELoss()
     
@@ -630,19 +626,9 @@ def train_model(config: Dict, logger: logging.Logger):
     except Exception as e:
         logger.warning(f'Failed to normalize fMRI data: {e}')
 
-    # sMRI: per-feature z-score across subjects
-    try:
-        if smri_data.shape[1] > 0:
-            smri_mean = np.nanmean(smri_data, axis=0, keepdims=True)
-            smri_std = np.nanstd(smri_data, axis=0, keepdims=True) + 1e-8
-            smri_data = (smri_data - smri_mean) / smri_std
-            # replace NaNs (from constant columns) with zeros
-            smri_data = np.nan_to_num(smri_data)
-            logger.info('Applied per-feature z-score to sMRI data')
-        else:
-            logger.info('sMRI data empty — skipping sMRI normalization')
-    except Exception as e:
-        logger.warning(f'Failed to normalize sMRI data: {e}')
+    # Global sMRI normalization removed to prevent data leakage.
+    # Normalization will be performed per-fold using training set statistics.
+    logger.info('Global sMRI normalization skipped (will be performed per-fold)')
 
     # Update config with actual data dimensions
     config['smri_dim'] = smri_data.shape[1]
@@ -690,6 +676,21 @@ def train_model(config: Dict, logger: logging.Logger):
             pheno_data['genders'],
             fold_splits[fold]['test'], site_to_idx, augment=False
         )
+
+        # Per-fold sMRI normalization to prevent data leakage
+        if smri_data.shape[1] > 0:
+            scaler = StandardScaler()
+            # Fit on training data only
+            train_dataset.smri_data = scaler.fit_transform(train_dataset.smri_data)
+            # Transform val and test data using training statistics
+            val_dataset.smri_data = scaler.transform(val_dataset.smri_data)
+            test_dataset.smri_data = scaler.transform(test_dataset.smri_data)
+            
+            # Handle potential NaNs from constant features
+            train_dataset.smri_data = np.nan_to_num(train_dataset.smri_data)
+            val_dataset.smri_data = np.nan_to_num(val_dataset.smri_data)
+            test_dataset.smri_data = np.nan_to_num(test_dataset.smri_data)
+            logger.info(f"Fold {fold+1}: Applied per-fold sMRI normalization")
         
         # Create dataloaders
         train_loader = DataLoader(train_dataset, batch_size=config['batch_size'], 
@@ -716,12 +717,18 @@ def train_model(config: Dict, logger: logging.Logger):
         
         scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
         
+        # Calculate class weights for this fold
+        train_labels_fold = pheno_data['labels'][fold_splits[fold]['train']]
+        class_counts = np.bincount(train_labels_fold.astype(int))
+        class_weights = torch.tensor([len(train_labels_fold) / (len(class_counts) * count) for count in class_counts], dtype=torch.float32).to(device)
+        
         # Create loss function
         criterion = MultiTaskLoss(
             lambda_cls=config['lambda_cls'],
             lambda_site=config['lambda_site'],
             lambda_age=config['lambda_age'],
-            lambda_reg=config['lambda_reg']
+            lambda_reg=config['lambda_reg'],
+            class_weights=class_weights
         )
         
         # Training loop
@@ -1057,25 +1064,23 @@ if __name__ == "__main__":
         'num_sites': 20,
         
         # Model parameters
-        'hidden_dim': 256,
-        'dropout': 0.3,
+        'hidden_dim': 128,      # Reduced to prevent overfitting
+        'dropout': 0.4,         # Moderate dropout
         
         # Training parameters
         'batch_size': 32,
-        'learning_rate': 5e-4,  # Slightly higher with warmup
-        'weight_decay': 0.01,  # Standard weight decay
+        'learning_rate': 5e-4,
+        'weight_decay': 0.02,   # Increased weight decay for regularization
         'epochs': 200,
         'patience': 30,
-        'lambda_cls': 5.0,  # Increased weight for classification task
         'k_fold': 5,
         'random_seed': 42,
         
         # Loss weights
-        'lambda_cls': 1.0,
-        'lambda_site': 0.1,
-        'lambda_age': 0.01,
-        'lambda_reg': 0.0001,
-        'lambda_site': 0.05,
+        'lambda_cls': 5.0,      # Prioritize classification
+        'lambda_site': 0.05,    # Domain adaptation weight
+        'lambda_age': 0.01,     # Deconfounding weight
+        'lambda_reg': 0.001,    # Stronger L2 regularization weight
         
         # Paths
         'save_dir': './results_GNN',
