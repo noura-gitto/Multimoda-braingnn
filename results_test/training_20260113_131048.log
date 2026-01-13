@@ -1,0 +1,123 @@
+2026-01-13 13:10:48,406 - INFO - Training Configuration:
+2026-01-13 13:10:48,406 - INFO - {
+    "num_samples": 871,
+    "num_nodes": 200,
+    "smri_dim": 2500,
+    "num_sites": 20,
+    "hidden_dim": 512,
+    "dropout": 0.4,
+    "batch_size": 32,
+    "learning_rate": 0.0005,
+    "weight_decay": 0.02,
+    "epochs": 200,
+    "patience": 30,
+    "k_fold": 5,
+    "random_seed": 42,
+    "lambda_cls": 5.0,
+    "lambda_site": 0.05,
+    "lambda_age": 0.01,
+    "lambda_reg": 0.001,
+    "save_dir": "./results_test",
+    "data_dir": "./data"
+}
+2026-01-13 13:10:48,547 - INFO - Using device: cuda
+2026-01-13 13:10:48,549 - INFO - Loading data...
+2026-01-13 13:10:48,549 - INFO - Loading phenotypic data from ./data/phynotypic
+2026-01-13 13:10:48,552 - INFO - Loaded phenotypic data for 871 subjects
+2026-01-13 13:10:48,553 - INFO - Labels distribution: ASD=403, TD=468
+2026-01-13 13:10:48,553 - INFO - Number of unique sites: 20
+2026-01-13 13:10:48,553 - INFO - Loading fMRI data from ./data/fMRI/CC200
+2026-01-13 13:10:48,860 - INFO - Loaded fMRI data shape: (871, 200, 200)
+2026-01-13 13:10:48,860 - INFO - Loading sMRI data from ./data/sMRI/freesurfer_stats
+2026-01-13 13:10:51,481 - INFO - Loaded sMRI data shape: (871, 2072)
+2026-01-13 13:10:52,043 - INFO - Applied Fisher z and per-subject z-score to fMRI data
+2026-01-13 13:10:52,043 - INFO - Global sMRI normalization skipped (will be performed per-fold)
+2026-01-13 13:10:52,044 - INFO - Creating 5-fold standard stratified splits
+2026-01-13 13:10:52,049 - INFO - Fold 1: Train=556, Val=140, Test=175
+2026-01-13 13:10:52,049 - INFO - Fold 2: Train=557, Val=140, Test=174
+2026-01-13 13:10:52,050 - INFO - Fold 3: Train=557, Val=140, Test=174
+2026-01-13 13:10:52,051 - INFO - Fold 4: Train=557, Val=140, Test=174
+2026-01-13 13:10:52,052 - INFO - Fold 5: Train=557, Val=140, Test=174
+2026-01-13 13:10:52,052 - INFO - 
+==================================================
+2026-01-13 13:10:52,052 - INFO - Training Fold 1/5
+2026-01-13 13:10:52,052 - INFO - ==================================================
+2026-01-13 13:10:52,163 - INFO - Fold 1: Applied per-fold sMRI normalization
+2026-01-13 13:10:52,396 - INFO - Model parameters: 7,976,868
+2026-01-13 13:11:00,129 - INFO - Epoch 1: Train Loss=1.8713, Train Acc=0.5000, Val Loss=1.7347, Val Acc=0.5357, Val AUC=0.5586
+2026-01-13 13:11:00,168 - INFO - Saved best model with Val AUC=0.5586
+2026-01-13 13:11:06,421 - INFO - Epoch 2: Train Loss=1.9202, Train Acc=0.5018, Val Loss=1.7324, Val Acc=0.5357, Val AUC=0.5598
+2026-01-13 13:11:06,454 - INFO - Saved best model with Val AUC=0.5598
+2026-01-13 13:11:12,726 - INFO - Epoch 3: Train Loss=1.8210, Train Acc=0.5468, Val Loss=1.7272, Val Acc=0.5357, Val AUC=0.5610
+2026-01-13 13:11:12,761 - INFO - Saved best model with Val AUC=0.5610
+2026-01-13 13:11:19,030 - INFO - Epoch 4: Train Loss=1.8249, Train Acc=0.4946, Val Loss=1.7216, Val Acc=0.5071, Val AUC=0.5448
+2026-01-13 13:11:25,727 - INFO - Epoch 5: Train Loss=1.8062, Train Acc=0.5054, Val Loss=1.7163, Val Acc=0.5214, Val AUC=0.5484
+2026-01-13 13:11:31,927 - INFO - Epoch 6: Train Loss=1.7948, Train Acc=0.4766, Val Loss=1.7133, Val Acc=0.4571, Val AUC=0.5526
+2026-01-13 13:11:37,607 - INFO - Epoch 7: Train Loss=1.7763, Train Acc=0.4874, Val Loss=1.7073, Val Acc=0.5143, Val AUC=0.5434
+2026-01-13 13:11:43,621 - INFO - Epoch 8: Train Loss=1.7333, Train Acc=0.4892, Val Loss=1.6982, Val Acc=0.5000, Val AUC=0.5815
+2026-01-13 13:11:43,654 - INFO - Saved best model with Val AUC=0.5815
+2026-01-13 13:11:50,124 - INFO - Epoch 9: Train Loss=1.7662, Train Acc=0.4478, Val Loss=1.6889, Val Acc=0.5714, Val AUC=0.6117
+2026-01-13 13:11:50,221 - INFO - Saved best model with Val AUC=0.6117
+2026-01-13 13:11:55,728 - INFO - Epoch 10: Train Loss=1.7405, Train Acc=0.4802, Val Loss=1.6897, Val Acc=0.5571, Val AUC=0.5491
+2026-01-13 13:12:02,523 - INFO - Epoch 11: Train Loss=1.7364, Train Acc=0.4730, Val Loss=1.6806, Val Acc=0.5143, Val AUC=0.5719
+2026-01-13 13:12:08,627 - INFO - Epoch 12: Train Loss=1.7115, Train Acc=0.4838, Val Loss=1.6808, Val Acc=0.5071, Val AUC=0.6055
+2026-01-13 13:12:15,027 - INFO - Epoch 13: Train Loss=1.7105, Train Acc=0.5000, Val Loss=1.6636, Val Acc=0.5429, Val AUC=0.5848
+2026-01-13 13:12:21,026 - INFO - Epoch 14: Train Loss=1.6963, Train Acc=0.5090, Val Loss=1.6706, Val Acc=0.6000, Val AUC=0.6365
+2026-01-13 13:12:21,059 - INFO - Saved best model with Val AUC=0.6365
+2026-01-13 13:12:26,825 - INFO - Epoch 15: Train Loss=1.6765, Train Acc=0.5468, Val Loss=1.6582, Val Acc=0.5571, Val AUC=0.6658
+2026-01-13 13:12:26,858 - INFO - Saved best model with Val AUC=0.6658
+2026-01-13 13:12:33,224 - INFO - Epoch 16: Train Loss=1.6701, Train Acc=0.5432, Val Loss=1.6563, Val Acc=0.6214, Val AUC=0.6615
+2026-01-13 13:12:39,509 - INFO - Epoch 17: Train Loss=1.6738, Train Acc=0.5252, Val Loss=1.6465, Val Acc=0.5857, Val AUC=0.6468
+2026-01-13 13:12:46,325 - INFO - Epoch 18: Train Loss=1.6475, Train Acc=0.5953, Val Loss=1.6773, Val Acc=0.5643, Val AUC=0.5865
+2026-01-13 13:12:52,920 - INFO - Epoch 19: Train Loss=1.5990, Train Acc=0.6817, Val Loss=1.6440, Val Acc=0.6000, Val AUC=0.7087
+2026-01-13 13:12:52,953 - INFO - Saved best model with Val AUC=0.7087
+2026-01-13 13:12:59,019 - INFO - Epoch 20: Train Loss=1.5565, Train Acc=0.7158, Val Loss=1.6292, Val Acc=0.5929, Val AUC=0.7030
+2026-01-13 13:13:05,219 - INFO - Epoch 21: Train Loss=1.4908, Train Acc=0.7356, Val Loss=1.7212, Val Acc=0.6214, Val AUC=0.6741
+2026-01-13 13:13:10,924 - INFO - Epoch 22: Train Loss=1.4149, Train Acc=0.7698, Val Loss=1.8008, Val Acc=0.6500, Val AUC=0.6507
+2026-01-13 13:13:16,400 - INFO - Epoch 23: Train Loss=1.4908, Train Acc=0.7590, Val Loss=1.8444, Val Acc=0.6000, Val AUC=0.5836
+2026-01-13 13:13:21,300 - INFO - Epoch 24: Train Loss=1.3997, Train Acc=0.8004, Val Loss=1.7192, Val Acc=0.6143, Val AUC=0.6314
+2026-01-13 13:13:26,223 - INFO - Epoch 25: Train Loss=1.4370, Train Acc=0.8004, Val Loss=1.6946, Val Acc=0.6357, Val AUC=0.6695
+2026-01-13 13:13:31,600 - INFO - Epoch 26: Train Loss=1.4661, Train Acc=0.8094, Val Loss=1.8766, Val Acc=0.5429, Val AUC=0.5214
+2026-01-13 13:13:36,824 - INFO - Epoch 27: Train Loss=1.4614, Train Acc=0.8147, Val Loss=1.7888, Val Acc=0.6000, Val AUC=0.6466
+2026-01-13 13:13:42,626 - INFO - Epoch 28: Train Loss=1.3193, Train Acc=0.8597, Val Loss=1.8732, Val Acc=0.6643, Val AUC=0.6779
+2026-01-13 13:13:47,923 - INFO - Epoch 29: Train Loss=1.2293, Train Acc=0.8813, Val Loss=1.9052, Val Acc=0.6071, Val AUC=0.6714
+2026-01-13 13:13:53,023 - INFO - Epoch 30: Train Loss=1.2246, Train Acc=0.8957, Val Loss=1.9126, Val Acc=0.6286, Val AUC=0.6367
+2026-01-13 13:13:58,022 - INFO - Epoch 31: Train Loss=1.2062, Train Acc=0.8813, Val Loss=2.1167, Val Acc=0.5714, Val AUC=0.5967
+2026-01-13 13:14:03,123 - INFO - Epoch 32: Train Loss=1.1840, Train Acc=0.9029, Val Loss=1.8969, Val Acc=0.6357, Val AUC=0.6872
+2026-01-13 13:14:09,521 - INFO - Epoch 33: Train Loss=1.3218, Train Acc=0.8831, Val Loss=1.9297, Val Acc=0.6071, Val AUC=0.6683
+2026-01-13 13:14:15,424 - INFO - Epoch 34: Train Loss=1.2080, Train Acc=0.8975, Val Loss=2.0041, Val Acc=0.6071, Val AUC=0.5639
+2026-01-13 13:14:21,724 - INFO - Epoch 35: Train Loss=1.1635, Train Acc=0.8975, Val Loss=1.9215, Val Acc=0.6143, Val AUC=0.6382
+2026-01-13 13:14:27,820 - INFO - Epoch 36: Train Loss=1.1591, Train Acc=0.9155, Val Loss=2.0894, Val Acc=0.6214, Val AUC=0.6542
+2026-01-13 13:14:34,111 - INFO - Epoch 37: Train Loss=1.1201, Train Acc=0.9335, Val Loss=2.2847, Val Acc=0.6429, Val AUC=0.6226
+2026-01-13 13:14:40,328 - INFO - Epoch 38: Train Loss=1.1661, Train Acc=0.9083, Val Loss=2.1989, Val Acc=0.5786, Val AUC=0.6031
+2026-01-13 13:14:46,023 - INFO - Epoch 39: Train Loss=1.3231, Train Acc=0.8507, Val Loss=1.7744, Val Acc=0.6000, Val AUC=0.5899
+2026-01-13 13:14:51,223 - INFO - Epoch 40: Train Loss=1.2098, Train Acc=0.9227, Val Loss=2.0127, Val Acc=0.6286, Val AUC=0.6275
+2026-01-13 13:14:56,619 - INFO - Epoch 41: Train Loss=1.2072, Train Acc=0.9227, Val Loss=2.0930, Val Acc=0.5857, Val AUC=0.5785
+2026-01-13 13:15:02,820 - INFO - Epoch 42: Train Loss=1.1477, Train Acc=0.9263, Val Loss=2.2039, Val Acc=0.5714, Val AUC=0.5924
+2026-01-13 13:15:08,730 - INFO - Epoch 43: Train Loss=1.1336, Train Acc=0.9119, Val Loss=2.1485, Val Acc=0.5571, Val AUC=0.5783
+2026-01-13 13:15:14,923 - INFO - Epoch 44: Train Loss=1.0781, Train Acc=0.9442, Val Loss=2.2178, Val Acc=0.5929, Val AUC=0.6080
+2026-01-13 13:15:21,320 - INFO - Epoch 45: Train Loss=1.1848, Train Acc=0.9388, Val Loss=2.4594, Val Acc=0.5857, Val AUC=0.5653
+2026-01-13 13:15:27,423 - INFO - Epoch 46: Train Loss=1.0463, Train Acc=0.9676, Val Loss=2.5225, Val Acc=0.6143, Val AUC=0.5986
+2026-01-13 13:15:33,620 - INFO - Epoch 47: Train Loss=1.1122, Train Acc=0.9478, Val Loss=2.5696, Val Acc=0.6000, Val AUC=0.5356
+2026-01-13 13:15:39,823 - INFO - Epoch 48: Train Loss=1.1042, Train Acc=0.9514, Val Loss=2.9615, Val Acc=0.5571, Val AUC=0.5411
+2026-01-13 13:15:45,819 - INFO - Epoch 49: Train Loss=1.1124, Train Acc=0.9424, Val Loss=3.1596, Val Acc=0.6000, Val AUC=0.5676
+2026-01-13 13:15:45,819 - INFO - Early stopping at epoch 49
+2026-01-13 13:15:46,505 - INFO - 
+Fold 1 Test Results:
+2026-01-13 13:15:46,505 - INFO - Accuracy: 0.5714
+2026-01-13 13:15:46,505 - INFO - AUC: 0.6702
+2026-01-13 13:15:46,505 - INFO - F1: 0.5482
+2026-01-13 13:15:46,853 - INFO - Saved ROC curve plot for Fold 1
+2026-01-13 13:15:47,071 - INFO - Saved confusion matrix plot for Fold 1
+2026-01-13 13:15:47,072 - INFO - 
+============================================================
+2026-01-13 13:15:47,072 - INFO - Classification Report - Fold 1
+2026-01-13 13:15:47,072 - INFO - ============================================================
+2026-01-13 13:15:48,008 - INFO - Saved clinical metrics plot for Fold 1
+2026-01-13 13:15:49,300 - INFO - Saved site performance plot for Fold 1
+2026-01-13 13:15:49,303 - INFO - 
+==================================================
+2026-01-13 13:15:49,303 - INFO - Training Fold 2/5
+2026-01-13 13:15:49,303 - INFO - ==================================================
+2026-01-13 13:15:50,307 - INFO - Fold 2: Applied per-fold sMRI normalization
+2026-01-13 13:15:50,350 - INFO - Model parameters: 7,976,868

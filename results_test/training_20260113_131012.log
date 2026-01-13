@@ -1,0 +1,46 @@
+2026-01-13 13:10:12,410 - INFO - Training Configuration:
+2026-01-13 13:10:12,410 - INFO - {
+    "num_samples": 871,
+    "num_nodes": 200,
+    "smri_dim": 2500,
+    "num_sites": 20,
+    "hidden_dim": 256,
+    "dropout": 0.4,
+    "batch_size": 32,
+    "learning_rate": 0.0005,
+    "weight_decay": 0.02,
+    "epochs": 200,
+    "patience": 30,
+    "k_fold": 5,
+    "random_seed": 42,
+    "lambda_cls": 5.0,
+    "lambda_site": 0.05,
+    "lambda_age": 0.01,
+    "lambda_reg": 0.001,
+    "save_dir": "./results_test",
+    "data_dir": "./data"
+}
+2026-01-13 13:10:12,546 - INFO - Using device: cuda
+2026-01-13 13:10:12,547 - INFO - Loading data...
+2026-01-13 13:10:12,547 - INFO - Loading phenotypic data from ./data/phynotypic
+2026-01-13 13:10:12,550 - INFO - Loaded phenotypic data for 871 subjects
+2026-01-13 13:10:12,550 - INFO - Labels distribution: ASD=403, TD=468
+2026-01-13 13:10:12,550 - INFO - Number of unique sites: 20
+2026-01-13 13:10:12,550 - INFO - Loading fMRI data from ./data/fMRI/CC200
+2026-01-13 13:10:12,821 - INFO - Loaded fMRI data shape: (871, 200, 200)
+2026-01-13 13:10:12,822 - INFO - Loading sMRI data from ./data/sMRI/freesurfer_stats
+2026-01-13 13:10:14,833 - INFO - Loaded sMRI data shape: (871, 2072)
+2026-01-13 13:10:15,305 - INFO - Applied Fisher z and per-subject z-score to fMRI data
+2026-01-13 13:10:15,305 - INFO - Global sMRI normalization skipped (will be performed per-fold)
+2026-01-13 13:10:15,305 - INFO - Creating 5-fold standard stratified splits
+2026-01-13 13:10:15,307 - INFO - Fold 1: Train=556, Val=140, Test=175
+2026-01-13 13:10:15,308 - INFO - Fold 2: Train=557, Val=140, Test=174
+2026-01-13 13:10:15,308 - INFO - Fold 3: Train=557, Val=140, Test=174
+2026-01-13 13:10:15,309 - INFO - Fold 4: Train=557, Val=140, Test=174
+2026-01-13 13:10:15,309 - INFO - Fold 5: Train=557, Val=140, Test=174
+2026-01-13 13:10:15,309 - INFO - 
+==================================================
+2026-01-13 13:10:15,309 - INFO - Training Fold 1/5
+2026-01-13 13:10:15,309 - INFO - ==================================================
+2026-01-13 13:10:15,407 - INFO - Fold 1: Applied per-fold sMRI normalization
+2026-01-13 13:10:15,599 - INFO - Model parameters: 6,461,092

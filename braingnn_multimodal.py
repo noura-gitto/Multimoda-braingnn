@@ -162,6 +162,8 @@ class fMRIGraphBranch(nn.Module):
         self.gcn1 = GraphConvolution(num_nodes, hidden_dim)
         self.gcn2 = GraphConvolution(hidden_dim, hidden_dim)
         self.gcn3 = GraphConvolution(hidden_dim, hidden_dim)
+        self.gcn4 = GraphConvolution(hidden_dim, hidden_dim)
+        self.gcn5 = GraphConvolution(hidden_dim, hidden_dim)
         
         self.gat = GraphAttentionLayer(hidden_dim, hidden_dim, dropout=dropout, concat=False)
         self.pool = GraphPooling(hidden_dim, ratio=0.5)
@@ -169,6 +171,8 @@ class fMRIGraphBranch(nn.Module):
         self.bn1 = nn.BatchNorm1d(hidden_dim)
         self.bn2 = nn.BatchNorm1d(hidden_dim)
         self.bn3 = nn.BatchNorm1d(hidden_dim)
+        self.bn4 = nn.BatchNorm1d(hidden_dim)
+        self.bn5 = nn.BatchNorm1d(hidden_dim)
         
         self.self_attention = nn.MultiheadAttention(hidden_dim, num_heads=8, dropout=dropout)
         
@@ -224,6 +228,14 @@ class fMRIGraphBranch(nn.Module):
         
         x = self.gcn3(x, adj)
         x = self.bn3(x.transpose(1, 2)).transpose(1, 2)
+        x = self.dropout(x)
+        
+        x = self.gcn4(x, adj)
+        x = self.bn4(x.transpose(1, 2)).transpose(1, 2)
+        x = self.dropout(x)
+        
+        x = self.gcn5(x, adj)
+        x = self.bn5(x.transpose(1, 2)).transpose(1, 2)
         x = self.dropout(x)
         
         x = self.gat(x, adj)
@@ -282,6 +294,8 @@ class sMRIBranch(nn.Module):
         self.attention_norm = nn.LayerNorm(hidden_dim)
         self.res_block1 = ResidualBlock(hidden_dim, dropout)
         self.res_block2 = ResidualBlock(hidden_dim, dropout)
+        self.res_block3 = ResidualBlock(hidden_dim, dropout)
+        self.res_block4 = ResidualBlock(hidden_dim, dropout)
         
         self.feature_attention = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim // 4),
@@ -307,6 +321,8 @@ class sMRIBranch(nn.Module):
         
         x = self.res_block1(x)
         x = self.res_block2(x)
+        x = self.res_block3(x)
+        x = self.res_block4(x)
         
         weights = self.feature_attention(x)
         x = x * weights

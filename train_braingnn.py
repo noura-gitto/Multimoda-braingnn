@@ -1041,7 +1041,7 @@ if __name__ == "__main__":
         'num_sites': 20,
         
         # Model parameters
-        'hidden_dim': 256,      # Reduced to prevent overfitting
+        'hidden_dim': 128,      # Reduced to prevent overfitting
         'dropout': 0.4,         # Moderate dropout
         
         # Training parameters
@@ -1060,7 +1060,7 @@ if __name__ == "__main__":
         'lambda_reg': 0.001,    # Stronger L2 regularization weight
         
         # Paths
-        'save_dir': './results_GNN3',
+        'save_dir': './results_test',
         'data_dir': './data'
     }
     
