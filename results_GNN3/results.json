@@ -1,0 +1,60 @@
+{
+    "config": {
+        "num_samples": 871,
+        "num_nodes": 200,
+        "smri_dim": 2072,
+        "num_sites": 20,
+        "hidden_dim": 256,
+        "dropout": 0.4,
+        "batch_size": 32,
+        "learning_rate": 0.0005,
+        "weight_decay": 0.02,
+        "epochs": 200,
+        "patience": 30,
+        "k_fold": 5,
+        "random_seed": 42,
+        "lambda_cls": 5.0,
+        "lambda_site": 0.05,
+        "lambda_age": 0.01,
+        "lambda_reg": 0.001,
+        "save_dir": "./results_GNN3",
+        "data_dir": "./data"
+    },
+    "fold_results": [
+        {
+            "fold": 1,
+            "test_accuracy": 0.5714285714285714,
+            "test_auc": 0.6149198844234305,
+            "test_f1": 0.5714285714285714
+        },
+        {
+            "fold": 2,
+            "test_accuracy": 0.5574712643678161,
+            "test_auc": 0.6163547059604407,
+            "test_f1": 0.5546679149113226
+        },
+        {
+            "fold": 3,
+            "test_accuracy": 0.5862068965517241,
+            "test_auc": 0.605203770078322,
+            "test_f1": 0.586481149669068
+        },
+        {
+            "fold": 4,
+            "test_accuracy": 0.45977011494252873,
+            "test_auc": 0.510372340425532,
+            "test_f1": 0.2896189700425378
+        },
+        {
+            "fold": 5,
+            "test_accuracy": 0.5402298850574713,
+            "test_auc": 0.5452127659574468,
+            "test_f1": 0.5116727350610408
+        }
+    ],
+    "average_metrics": {
+        "accuracy": 0.5430213464696223,
+        "auc": 0.5784126933690343,
+        "f1": 0.5027738682225081
+    }
+}

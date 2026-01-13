@@ -307,67 +307,45 @@ def load_phenotypic_data(pheno_dir: str, num_subjects: int,
 # Cross-Validation Split Function
 # ============================================================================
 
-def create_site_aware_splits(sites: np.ndarray, labels: np.ndarray, 
-                            k_fold: int = 5, random_state: int = 42,
-                            logger: Optional[logging.Logger] = None) -> Dict:
+def create_stratified_splits(labels: np.ndarray, 
+                             k_fold: int = 5, random_state: int = 42,
+                             logger: Optional[logging.Logger] = None) -> Dict:
     """
-    Create site-aware stratified k-fold splits
+    Create standard stratified k-fold splits (assuming site effects are removed)
     
     Returns:
         Dictionary with train, val, test indices for each fold
     """
     if logger:
-        logger.info(f"Creating {k_fold}-fold site-aware splits")
+        logger.info(f"Creating {k_fold}-fold standard stratified splits")
     
-    unique_sites = np.unique(sites)
     num_samples = len(labels)
-    
+    indices = np.arange(num_samples)
     fold_splits = {}
     
-    # Initialize fold splits
-    for fold in range(k_fold):
-        fold_splits[fold] = {'train': [], 'val': [], 'test': []}
-
-    # Track small sites to distribute them across folds
-    small_site_fold_counter = 0
-
-    for site in unique_sites:
-        site_mask = sites == site
-        site_indices = np.where(site_mask)[0]
-        site_labels = labels[site_indices]
+    # Outer split for test set
+    skf_outer = StratifiedKFold(n_splits=k_fold, shuffle=True, random_state=random_state)
+    
+    for fold, (train_val_idx, test_idx) in enumerate(skf_outer.split(indices, labels)):
+        # Inner split for validation set
+        train_val_labels = labels[train_val_idx]
         
-        # Handle small sites by assigning them to one fold's training set
-        if len(site_indices) < k_fold:
-            target_fold = small_site_fold_counter % k_fold
-            fold_splits[target_fold]['train'].extend(site_indices.tolist())
-            small_site_fold_counter += 1
-            continue
-        
-        # Stratified k-fold for larger sites
-        skf = StratifiedKFold(n_splits=k_fold, shuffle=True, random_state=random_state)
-        
-        for fold, (train_val, test) in enumerate(skf.split(site_indices, site_labels)):
-            # Further split train_val into train and val
-            train_val_indices = site_indices[train_val]
-            train_val_labels = site_labels[train_val]
+        # Use 20% of train_val for validation
+        skf_inner = StratifiedKFold(n_splits=5, shuffle=True, random_state=random_state)
+        for inner_train_idx, inner_val_idx in skf_inner.split(train_val_idx, train_val_labels):
+            train_idx = train_val_idx[inner_train_idx]
+            val_idx = train_val_idx[inner_val_idx]
+            break # Only need one split
             
-            if len(train_val_indices) >= 2:
-                skf_inner = StratifiedKFold(n_splits=min(4, len(train_val_indices)), 
-                                           shuffle=True, random_state=random_state)
-                for inner_idx, (train, val) in enumerate(skf_inner.split(train_val_indices, train_val_labels)):
-                    if inner_idx == 0:
-                        fold_splits[fold]['train'].extend(train_val_indices[train].tolist())
-                        fold_splits[fold]['val'].extend(train_val_indices[val].tolist())
-                        break
-            else:
-                fold_splits[fold]['train'].extend(train_val_indices.tolist())
-            
-            fold_splits[fold]['test'].extend(site_indices[test].tolist())
+        fold_splits[fold] = {
+            'train': train_idx.tolist(),
+            'val': val_idx.tolist(),
+            'test': test_idx.tolist()
+        }
         
-    if logger:
-        for fold in range(k_fold):
-            logger.info(f"Fold {fold+1}: Train={len(fold_splits[fold]['train'])}, "
-                       f"Val={len(fold_splits[fold]['val'])}, Test={len(fold_splits[fold]['test'])}")
+        if logger:
+            logger.info(f"Fold {fold+1}: Train={len(train_idx)}, "
+                       f"Val={len(val_idx)}, Test={len(test_idx)}")
     
     return fold_splits
 
@@ -639,8 +617,7 @@ def train_model(config: Dict, logger: logging.Logger):
     config['num_sites'] = len(unique_sites)
     
     # Create cross-validation splits
-    fold_splits = create_site_aware_splits(
-        pheno_data['sites'], 
+    fold_splits = create_stratified_splits(
         pheno_data['labels'],
         k_fold=config['k_fold'],
         random_state=config['random_seed'],
@@ -1064,7 +1041,7 @@ if __name__ == "__main__":
         'num_sites': 20,
         
         # Model parameters
-        'hidden_dim': 128,      # Reduced to prevent overfitting
+        'hidden_dim': 256,      # Reduced to prevent overfitting
         'dropout': 0.4,         # Moderate dropout
         
         # Training parameters
@@ -1083,7 +1060,7 @@ if __name__ == "__main__":
         'lambda_reg': 0.001,    # Stronger L2 regularization weight
         
         # Paths
-        'save_dir': './results_GNN',
+        'save_dir': './results_GNN3',
         'data_dir': './data'
     }
     

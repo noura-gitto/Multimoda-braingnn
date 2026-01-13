@@ -156,7 +156,7 @@ class fMRIGraphBranch(nn.Module):
         self.hidden_dim = hidden_dim
         
         # Adaptive sparsification: keep top 20% of edges
-        self.keep_ratio = 0.15 
+        self.keep_ratio = 0.2 
         
         # Graph convolutional layers with residual support
         self.gcn1 = GraphConvolution(num_nodes, hidden_dim)
